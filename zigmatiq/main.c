@@ -20,6 +20,14 @@
  *
  */
 
+enum OpterationType {
+  OP_UNKNOWN = 0,
+  OP_ENCODE,
+  OP_DECODE,
+  OP_SIGN,
+  OP_CHECK
+};
+
 int main(int argc, char* argv[])
 {
   return 0;
