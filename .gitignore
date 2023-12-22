@@ -1,0 +1,13 @@
+*.d
+*.o
+build
+*.swp
+
+bin
+build
+.cache
+
+compile_commands.json
+.template
+
+.vscode
