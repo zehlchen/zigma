@@ -36,7 +36,7 @@ execute_process(
 execute_process(
   COMMAND git log -1 --format=%h
   WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
-  OUTPUT_VARIABLE GIT_HASH
+  OUTPUT_VARIABLE GIT_COMMIT
   OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
@@ -59,6 +59,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 add_executable(zigmatiq)
 target_sources(zigmatiq PRIVATE
   zigmatiq/buffer.c
+  zigmatiq/common.c
   zigmatiq/main.c
 )
 
@@ -68,4 +69,5 @@ add_compile_definitions(
   ZIGMATIQ_GIT_BRANCH="${GIT_BRANCH}"
   ZIGMATIQ_GIT_TAG="${GIT_TAG}"
   ZIGMATIQ_VERSION_STRING="${PROJECT_VERSION}:${GIT_BUILD}"
+  ZIGMATIQ_COMPILE_FLAGS="${CMAKE_C_FLAGS}"
 )

@@ -21,15 +21,12 @@
  */
 
 #include <stdio.h>
-#include <stdlib.h>
 
 #include "common.h"
 
-enum OpterationType { OP_UNKNOWN = 0, OP_ENCODE, OP_DECODE, OP_SIGN, OP_CHECK };
-
-int main(int argc, char* argv[])
+void PrintVersion()
 {
-  PrintVersion();
-  
-  return 0;
+  fprintf(stderr, "ZIGMAtiq-%s/%s@%s\n", ZIGMATIQ_VERSION_STRING, ZIGMATIQ_GIT_BRANCH, ZIGMATIQ_GIT_COMMIT);
+  fprintf(stderr, "  Copyright (C) 2024 Chase Zehl O'Byrne <zehl (at) live.com>\n");
+  fprintf(stderr, "  Built: %s (%s) - %s\n", __DATE__, __TIME__, __VERSION__);
 }

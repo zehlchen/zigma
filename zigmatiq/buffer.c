@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "common.h"
 #include "buffer.h"
 
 Buffer* BufferCreate(Buffer* buffer, uint64 length)
