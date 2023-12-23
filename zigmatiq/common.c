@@ -30,3 +30,11 @@ void PrintVersion()
   fprintf(stderr, "  Copyright (C) 2024 Chase Zehl O'Byrne <zehl (at) live.com>\n");
   fprintf(stderr, "  Built: %s (%s) - %s\n", __DATE__, __TIME__, __VERSION__);
 }
+
+void Nullify(void* ptr, uint64 size)
+{
+  volatile unsigned char* _ptr = ptr;
+
+  while (size--)
+    *_ptr++ = 0;
+}

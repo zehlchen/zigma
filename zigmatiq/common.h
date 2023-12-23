@@ -59,13 +59,19 @@ void PrintVersion();
  * Debug code ... respect no-debug requests.
  */
 #ifndef NDEBUG
-#define DEBUG_ASSERT(x)                            \
-  if (!(x)) {                                      \
-    fprintf(stderr, "assertion failed: %s\n", #x); \
-    exit(EXIT_FAILURE);                            \
+#define DEBUG_ASSERT(x)                                                       \
+  if (!(x)) {                                                                 \
+    fprintf(stderr, "%s:%d: assertion failed: %s\n", __FILE__, __LINE__, #x); \
+    exit(EXIT_FAILURE);                                                       \
   }
 #else
 #define DEBUG_ASSERT(x)
 #endif
 
+/* Wipes a pointer to a memory location.
+ * Write zeroes to the memory location pointed to by `ptr` (up to `size` bytes).
+ *   @param ptr  The pointer to the memory location.
+ *   @param size The size of the memory location.
+ */
+void Nullify(void* ptr, uint64 size);
 #endif /* _ZIGMATIQ_COMMON_H_ */
