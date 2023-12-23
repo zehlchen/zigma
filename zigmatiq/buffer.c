@@ -82,3 +82,22 @@ void BufferDestroy(Buffer* buffer)
   free(buffer->data);
   free(buffer);
 }
+
+Buffer* BufferResize(Buffer* buffer, uint64 length)
+{
+  if (buffer == NULL)
+    return BufferCreate(buffer, length);
+
+  if (length <= buffer->capacity) {
+    buffer->length = length;
+    return buffer;
+  }
+
+  uint64 toAllocate = length < ZQ_BUFFER_DEFAULT_CAPACITY ? ZQ_BUFFER_DEFAULT_CAPACITY : length;
+
+  buffer->data     = (uint8*) realloc(buffer->data, toAllocate);
+  buffer->length   = length;
+  buffer->capacity = toAllocate;
+
+  return buffer;
+}

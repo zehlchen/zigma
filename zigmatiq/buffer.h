@@ -28,7 +28,7 @@
 
 #define ZQ_BUFFER_DEFAULT_CAPACITY (1024 * 1024) /* 1MB */
 
-/* Unified "binary-string" object for manipulation. 
+/* Unified "binary-string" object for manipulation.
  * The buffer object is a simple wrapper around a uint8 array.
  */
 typedef struct Buffer {
@@ -51,13 +51,13 @@ typedef struct Buffer {
  */
 Buffer* BufferCreate(Buffer* buffer, uint64 length);
 
-/* Create a new buffer from a uint8 array. 
-  *   @param buffer The buffer object.
-  *   @param data The data array.
-  *   @param length The length of the data array.
-  *   @return The buffer object.
-  *   @note If buffer is NULL, a new buffer object will be allocated.
-  */
+/* Create a new buffer from a uint8 array.
+ *   @param buffer The buffer object.
+ *   @param data The data array.
+ *   @param length The length of the data array.
+ *   @return The buffer object.
+ *   @note If buffer is NULL, a new buffer object will be allocated.
+ */
 Buffer* BufferCreateCopy(Buffer* buffer, const uint8* data, uint64 length);
 
 /* Clone a buffer object.
@@ -73,5 +73,11 @@ Buffer* BufferClone(Buffer* buffer, const Buffer* other);
  */
 void BufferDestroy(Buffer* buffer);
 
+/* Resize a buffer object.
+ *   @param buffer The buffer object.
+ *   @param length The new length.
+ *   @return The buffer object.
+ */
+Buffer* BufferResize(Buffer* buffer, uint64 length);
 
 #endif /* _ZIGMATIQ_BUFFER_H_ */
