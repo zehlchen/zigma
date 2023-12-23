@@ -56,8 +56,8 @@ execute_process(
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-add_executable(zigmatiq)
-target_sources(zigmatiq PRIVATE
+add_executable(ziggy)
+target_sources(ziggy PRIVATE
   zigmatiq/buffer.c
   zigmatiq/common.c
   zigmatiq/main.c
