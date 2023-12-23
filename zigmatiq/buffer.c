@@ -22,8 +22,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "common.h"
 #include "buffer.h"
+
+#include "common.h"
 
 Buffer* BufferCreate(Buffer* buffer, uint64 length)
 {
@@ -75,6 +76,8 @@ void BufferDestroy(Buffer* buffer)
 {
   if (buffer == NULL)
     return;
+
+  Nullify(buffer->data, buffer->capacity);
 
   free(buffer->data);
   free(buffer);
