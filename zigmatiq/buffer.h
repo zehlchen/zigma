@@ -80,4 +80,9 @@ void BufferDestroy(Buffer* buffer);
  */
 Buffer* BufferResize(Buffer* buffer, uint64 length);
 
+/* Print a buffer object.
+ *   @param buffer The buffer object.
+ */
+void BufferPrint(const Buffer* buffer);
+
 #endif /* _ZIGMATIQ_BUFFER_H_ */

@@ -19,6 +19,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
+
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -100,4 +102,23 @@ Buffer* BufferResize(Buffer* buffer, uint64 length)
   buffer->capacity = toAllocate;
 
   return buffer;
+}
+
+void BufferPrint(const Buffer* buffer)
+{
+  DEBUG_ASSERT(buffer != NULL);
+
+  fprintf(stderr, "Buffer: %p\n", buffer);
+  fprintf(stderr, "  Length:   %lu\n", buffer->length);
+  fprintf(stderr, "  Capacity: %lu\n", buffer->capacity);
+  fprintf(stderr, "  Data:     %p = {\n    ", buffer->data);
+
+  for (int i = 0; i < buffer->length; i++) {
+    fprintf(stderr, "%02x", buffer->data[i]);
+
+    if ((i + 1) % 32 == 0)
+      fprintf(stderr, "\n    ");
+  }
+
+  fprintf(stderr, "\r  }\n");
 }
