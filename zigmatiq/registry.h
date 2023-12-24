@@ -45,7 +45,7 @@ typedef int (*RegistryCompare)(RegistryNode* node, const char* key);
  * @param value The value to store
  * @return      The new node
  */
-RegistryNode* RegistryCreateNode(char* key, char* value);
+RegistryNode* RegistryCreateNode(char const* key, char const* value);
 
 /* Destroy a Registry node
  * @param node  The node to destroy

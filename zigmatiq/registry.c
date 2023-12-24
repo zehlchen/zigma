@@ -28,7 +28,7 @@
 
 #include "registry.h"
 
-RegistryNode* RegistryCreateNode(char* key, char* value)
+RegistryNode* RegistryCreateNode(char const* key, char const* value)
 {
   RegistryNode* node = (RegistryNode*) malloc(sizeof(RegistryNode));
 
@@ -85,6 +85,8 @@ RegistryNode* RegistryUpdate(RegistryNode** head, const char* key, const char* v
 
       return current;
     }
+
+    current = current->next;
   }
 
   /* Create and insert the node. */
