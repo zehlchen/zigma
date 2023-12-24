@@ -61,6 +61,7 @@ target_sources(ziggy PRIVATE
   zigmatiq/buffer.c
   zigmatiq/common.c
   zigmatiq/main.c
+  zigmatiq/registry.c
   zigmatiq/zigma.c
 )
 
