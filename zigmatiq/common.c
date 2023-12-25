@@ -23,6 +23,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+
+#ifdef __linux__
+#include <termios.h>
+#endif
 
 #include "common.h"
 
@@ -65,4 +70,48 @@ uint32 LevenshteinDistance(const char* s, const char* t)
     }
   }
   return matrix[ls][lt];
+}
+
+unsigned long CaptureKey(uint8* buffer, const uint8* prompt)
+{
+#ifdef __linux__
+  struct termios old_term;
+  struct termios new_term;
+
+  tcgetattr(STDIN_FILENO, &old_term);
+  new_term = old_term;
+
+  new_term.c_lflag &= ~(ECHO | ICANON);
+  tcsetattr(STDIN_FILENO, TCSANOW, &new_term);
+#endif /* __linux__ */
+
+  fprintf(stderr, "%s", prompt);
+
+  int index = 0;
+
+  while (1) {
+    char ch = getchar();
+    if (ch == '\n' || ch == '\r') { // Enter key
+      buffer[index] = '\0';
+      break;
+    }
+    else if (ch == 127 || ch == '\b') { // Backspace key
+      if (index > 0) {
+        index--;
+        fputs("\b \b", stderr);
+      }
+    }
+    else if (index < ZQ_MAX_KEY_SIZE - 1) {
+      buffer[index++] = ch;
+      fputc('*', stderr);
+    }
+  }
+
+#ifdef __linux__
+  tcsetattr(STDIN_FILENO, TCSANOW, &old_term);
+#endif /* __linux__ */
+
+  fprintf(stderr, "\r\n");
+
+  return index;
 }

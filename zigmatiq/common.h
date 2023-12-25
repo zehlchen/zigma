@@ -54,9 +54,16 @@ uint32 uint32_min(uint32 a, uint32 b);
 
 uint32 LevenshteinDistance(const char* s, const char* t);
 
+unsigned long CaptureKey(uint8* buffer, const uint8* prompt);
+
 /* Define the length in bytes of the checksum. */
 #ifndef ZIGMA_CHECKSUM_SIZE
 #define ZIGMA_CHECKSUM_SIZE 32 /* 256 bits */
+#endif
+
+/* Define the maximum length of a passkey. */
+#ifndef ZQ_MAX_KEY_SIZE
+#define ZQ_MAX_KEY_SIZE 256
 #endif
 
 /*

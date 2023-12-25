@@ -43,12 +43,10 @@ struct Command {
 
 void HandleEncode(RegistryNode** registry);
 void HandleDecode(RegistryNode** registry);
-void HandleSign(RegistryNode** registry);
 void HandleCheck(RegistryNode** registry);
 
 struct Command commands[] = {{"encode", OP_ENCODE, &HandleEncode},
                              {"decode", OP_DECODE, &HandleDecode},
-                             {"sign", OP_SIGN, &HandleSign},
                              {"check", OP_CHECK, &HandleCheck},
                              {NULL, OP_UNKNOWN, NULL}};
 
@@ -130,20 +128,15 @@ OperationFunction ParseRegistry(RegistryNode** registry, int argc, char* argv[])
 
 void HandleEncode(RegistryNode** registry)
 {
-  fprintf(stderr, "mode: encode\n");
+  fprintf(stderr, "> MODE = ENCODE / ENCRYPT\n");
 }
 
 void HandleDecode(RegistryNode** registry)
 {
-  fprintf(stderr, "mode: decode\n");
-}
-
-void HandleSign(RegistryNode** registry)
-{
-  fprintf(stderr, "mode: sign\n");
+  fprintf(stderr, "> MODE = DECODE / DECRYPT\n");
 }
 
 void HandleCheck(RegistryNode** registry)
 {
-  fprintf(stderr, "mode: check\n");
+  fprintf(stderr, "> MODE = CHECK\n");
 }
