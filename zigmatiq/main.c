@@ -26,6 +26,7 @@
 
 #include "common.h"
 
+#include "base64.h"
 #include "buffer.h"
 #include "registry.h"
 
@@ -62,10 +63,10 @@ int main(int argc, char* argv[])
 
   RegistryNode* registry = NULL;
 
-  RegistryUpdate(&registry, "input", "");
-  RegistryUpdate(&registry, "output", "");
-  RegistryUpdate(&registry, "key", "");
-  RegistryUpdate(&registry, "format", "64");
+  RegistryUpdate(&registry, "input", "");    /* NULL = stdin */
+  RegistryUpdate(&registry, "output", "");   /* NULL = stdout */
+  RegistryUpdate(&registry, "key", "");      /* NULL = stdin */
+  RegistryUpdate(&registry, "format", "64"); /* Base 16, 64, 256 */
 
   OperationFunction op = ParseRegistry(&registry, argc, argv);
 
