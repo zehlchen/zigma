@@ -24,9 +24,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "buffer.h"
-
 #include "common.h"
+
+#include "base64.h"
+#include "buffer.h"
 
 Buffer* BufferCreate(Buffer* buffer, uint64 length)
 {
@@ -104,7 +105,7 @@ Buffer* BufferResize(Buffer* buffer, uint64 length)
   return buffer;
 }
 
-void BufferPrint(const Buffer* buffer)
+void BufferDebugPrint(const Buffer* buffer)
 {
   DEBUG_ASSERT(buffer != NULL);
 
@@ -121,4 +122,66 @@ void BufferPrint(const Buffer* buffer)
   }
 
   fprintf(stderr, "\r  }\n");
+}
+
+uint64 BufferPrintBase16(Buffer* buffer, FILE* stream)
+{
+  fprintf(stream, "    *** BEGIN BASE16 ENCODED DATA ***\n");
+
+  for (uint64 i = 0; i < buffer->length; i++) {
+    fprintf(stream, "%02x", buffer->data[i]);
+
+    if ((i + 1) % 64 == 0)
+      fprintf(stream, "\n");
+  }
+
+  fprintf(stream, "\n    *** END BASE16 ENCODED DATA ***\n");
+  fflush(stream);
+
+  return buffer->length * 2;
+}
+
+uint64 BufferPrintBase64(Buffer* buffer, FILE* stream)
+{
+  char*  encoded = malloc(2 * buffer->length); /* malloc(4 * ((buffer->length + 2) / 3)); */
+  uint64 length  = base64_encode(encoded, (char*) buffer->data, buffer->length);
+
+  fprintf(stream, "    *** BEGIN BASE64 ENCODED DATA ***\n");
+
+  for (int i = 0; i < length; i++) {
+    fprintf(stream, "%c", encoded[i]);
+
+    if ((i + 1) % 76 == 0)
+      fprintf(stream, "\n");
+  }
+
+  fprintf(stream, "\n    *** END BASE64 ENCODED DATA ***\n");
+  fflush(stream);
+
+  free(encoded);
+
+  return length;
+}
+
+uint64 BufferRead(Buffer* buffer, FILE* stream)
+{
+  DEBUG_ASSERT(buffer != NULL);
+  DEBUG_ASSERT(stream != NULL);
+
+  uint8* data = malloc(ZQ_MAX_BUFFER_SIZE);
+
+  uint64 count = 0;
+  uint64 total = 0;
+
+  while ((count = fread(data, 1, ZQ_MAX_BUFFER_SIZE, stream)) > 0) {
+    BufferResize(buffer, count + total);
+
+    memcpy(buffer->data + total, data, count);
+
+    total += count;
+  }
+
+  free(data);
+
+  return total;
 }

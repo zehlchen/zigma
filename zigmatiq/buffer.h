@@ -24,6 +24,8 @@
 #ifndef _ZIGMATIQ_BUFFER_H_
 #define _ZIGMATIQ_BUFFER_H_
 
+#include "buffer.h"
+
 #include "typedef.h"
 
 #define ZQ_BUFFER_DEFAULT_CAPACITY (1024 * 1024) /* 1MB */
@@ -80,9 +82,27 @@ void BufferDestroy(Buffer* buffer);
  */
 Buffer* BufferResize(Buffer* buffer, uint64 length);
 
-/* Print a buffer object.
+void BufferDebugPrint(const Buffer* buffer);
+
+/* Print a buffer to a stream in base16.
  *   @param buffer The buffer object.
+ *   @param stream The stream to print to.
+ *   @return The number of bytes printed.
  */
-void BufferPrint(const Buffer* buffer);
+uint64 BufferPrintBase16(Buffer* buffer, FILE* stream);
+
+/* Print a buffer to a stream in base64.
+ *   @param buffer The buffer object.
+ *   @param stream The stream to print to.
+ *   @return The number of bytes printed.
+ */
+uint64 BufferPrintBase64(Buffer* buffer, FILE* stream);
+
+/* Read a buffer from a stream.
+ *   @param buffer The buffer object.
+ *   @param stream The stream to read from.
+ *   @return The number of bytes read.
+ */
+uint64 BufferRead(Buffer* buffer, FILE* stream);
 
 #endif /* _ZIGMATIQ_BUFFER_H_ */
