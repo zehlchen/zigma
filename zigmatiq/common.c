@@ -38,3 +38,29 @@ void Nullify(void* ptr, uint64 size)
   while (size--)
     *_ptr++ = 0;
 }
+
+uint32 uint32_min(uint32 a, uint32 b)
+{
+  return (a < b) ? a : b;
+}
+
+uint32 LevenshteinDistance(const char* s, const char* t)
+{
+  int    ls = strlen(s), lt = strlen(t);
+  uint32 matrix[ls + 1][lt + 1];
+
+  for (int i = 0; i <= ls; i++)
+    matrix[i][0] = i;
+  for (int j = 0; j <= lt; j++)
+    matrix[0][j] = j;
+
+  for (int i = 1; i <= ls; i++) {
+    for (int j = 1; j <= lt; j++) {
+      uint32 cost  = (s[i - 1] == t[j - 1]) ? 0 : 1;
+      matrix[i][j] = uint32_min(matrix[i - 1][j] + 1,                     // Deletion
+                                uint32_min(matrix[i][j - 1] + 1,          // Insertion
+                                           matrix[i - 1][j - 1] + cost)); // Substitution
+    }
+  }
+  return matrix[ls][lt];
+}

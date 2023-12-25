@@ -50,6 +50,8 @@
 
 void PrintVersion();
 
+uint32 uint32_min(uint32 a, uint32 b);
+
 /* Define the length in bytes of the checksum. */
 #ifndef ZIGMA_CHECKSUM_SIZE
 #define ZIGMA_CHECKSUM_SIZE 32 /* 256 bits */
