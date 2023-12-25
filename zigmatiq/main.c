@@ -32,7 +32,7 @@
 #include "registry.h"
 #include "zigma.h"
 
-typedef enum OperationType { OP_UNKNOWN = 0, OP_ENCODE, OP_DECODE, OP_SIGN, OP_CHECK } OperationType;
+typedef enum OperationType { OP_UNKNOWN = 0, OP_ENCODE, OP_DECODE, OP_CHECK } OperationType;
 typedef void (*OperationFunction)(RegistryNode** registry);
 
 OperationFunction ParseRegistry(RegistryNode** registry, int argc, char* argv[]);
@@ -223,9 +223,6 @@ void HandleEncode(RegistryNode** registry)
   Buffer* inputBuffer  = BufferCreate(NULL, ZQ_MAX_BUFFER_SIZE);
   Buffer* outputBuffer = BufferCreate(NULL, 0);
 
-  if (outputBaseFormat == 64)
-    fprintf(outputFile, "### BEGIN CRYPTOGRAM ###\n");
-
   uint64 count = 0;
   uint64 total = 0;
 
@@ -331,9 +328,6 @@ void HandleDecode(RegistryNode** registry)
 
   Buffer* inputBuffer  = BufferCreate(NULL, ZQ_MAX_BUFFER_SIZE);
   Buffer* outputBuffer = BufferCreate(NULL, 0);
-
-  if (outputBaseFormat == 64)
-    fprintf(outputFile, "### BEGIN CRYPTOGRAM ###\n");
 
   uint64 count = 0;
   uint64 total = 0;
