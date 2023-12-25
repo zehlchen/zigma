@@ -31,11 +31,16 @@
 
 #include "common.h"
 
+#include "buffer.h"
+
 void PrintVersion()
 {
   fprintf(stderr, "ZIGMAtiq-%s/%s@%s\n", ZIGMATIQ_VERSION_STRING, ZIGMATIQ_GIT_BRANCH, ZIGMATIQ_GIT_COMMIT);
-  fprintf(stderr, "  Copyright (C) 2024 Chase Zehl O'Byrne <zehl (at) live.com>\n");
+  fprintf(stderr, "  Copyright (C) 2024 Chase Zehl O'Byrne <zehl (at) live.com>\n\n");
+
+#if 0
   fprintf(stderr, "  Built: %s (%s) - %s\n", __DATE__, __TIME__, __VERSION__);
+#endif
 }
 
 void Nullify(void* ptr, uint64 size)
@@ -114,4 +119,19 @@ unsigned long CaptureKey(uint8* buffer, const uint8* prompt)
   fprintf(stderr, "\r\n");
 
   return index;
+}
+
+void PrintHex(Buffer* buffer)
+{
+  for (uint64 i = 0; i < buffer->length; i++) {
+    fprintf(stderr, "%02x", buffer->data[i]);
+
+    if ((i + 1) % 64 == 0)
+      fprintf(stderr, "\n");
+    else if ((i + 1) % 8 == 0)
+      fprintf(stderr, "  ");
+    else
+      fprintf(stderr, " ");
+  }
+  fprintf(stderr, "\n");
 }
