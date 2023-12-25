@@ -20,6 +20,7 @@
  *
  */
 
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -29,6 +30,7 @@
 #include "base64.h"
 #include "buffer.h"
 #include "registry.h"
+#include "zigma.h"
 
 typedef enum OperationType { OP_UNKNOWN = 0, OP_ENCODE, OP_DECODE, OP_SIGN, OP_CHECK } OperationType;
 typedef void (*OperationFunction)(RegistryNode** registry);
@@ -128,12 +130,229 @@ OperationFunction ParseRegistry(RegistryNode** registry, int argc, char* argv[])
 
 void HandleEncode(RegistryNode** registry)
 {
+  RegistryNode* input  = RegistrySearch(registry, "input");
+  RegistryNode* output = RegistrySearch(registry, "output");
+  RegistryNode* key    = RegistrySearch(registry, "key");
+  RegistryNode* format = RegistrySearch(registry, "format");
+
+  DEBUG_ASSERT(input != NULL);
+  DEBUG_ASSERT(output != NULL);
+  DEBUG_ASSERT(key != NULL);
+  DEBUG_ASSERT(format != NULL);
+
+  FILE* inputFile  = stdin;
+  FILE* outputFile = stdout;
+
   fprintf(stderr, "> MODE = ENCODE / ENCRYPT\n");
+
+  /* Setup the input. */
+  if (*input->value != 0) {
+    inputFile = fopen(input->value, "r");
+
+    if (inputFile == NULL) {
+      fprintf(stderr, "ERROR: fopen(): unable to open input file '%s': %s\n", input->value, strerror(errno));
+      exit(EXIT_FAILURE);
+    }
+
+    fprintf(stderr, "# SUCCESS! OPEN INPUT FILE: '%s' ...!\n", input->value);
+  }
+  else {
+    fprintf(stderr, "# SUCCESS! INPUT STREAM: <STDIN> ...!\n");
+  }
+
+  /* Setup the output. */
+  if (*output->value != 0) {
+    outputFile = fopen(output->value, "w");
+
+    if (outputFile == NULL) {
+      fprintf(stderr, "ERROR: fopen(): unable to open output file '%s': %s!\n", output->value, strerror(errno));
+      exit(EXIT_FAILURE);
+    }
+
+    fprintf(stderr, "# SUCCESS! OPEN OUTPUT FILE: '%s' ...!\n", output->value);
+  }
+  else {
+    fprintf(stderr, "# SUCCESS! OUTPUT STREAM: <STDOUT> ...!\n");
+  }
+
+  Buffer* passwordBuffer = BufferCreate(NULL, ZQ_MAX_KEY_SIZE);
+
+  if (*key->value != 0) {
+    FILE* keyFile = fopen(key->value, "r");
+
+    if (keyFile == NULL) {
+      fprintf(stderr, "ERROR: fopen(): unable to open key file '%s': %s!\n", key->value, strerror(errno));
+      exit(EXIT_FAILURE);
+    }
+
+    passwordBuffer->length = fread(passwordBuffer->data, 1, ZQ_MAX_KEY_SIZE, keyFile);
+
+    if (passwordBuffer->length == 0) {
+      fprintf(stderr, "ERROR: fread(): unable to read key file '%s': %s!\n", key->value, strerror(errno));
+      exit(EXIT_FAILURE);
+    }
+
+    fprintf(stderr, "# SUCCESS! READ KEY FILE! (%d bytes)\n", passwordBuffer->length);
+  }
+  else {
+    Buffer* passwordRetryBuffer = BufferCreate(NULL, ZQ_MAX_KEY_SIZE);
+
+    passwordBuffer->length      = CaptureKey(passwordBuffer->data, "Enter password: ");
+    passwordRetryBuffer->length = CaptureKey(passwordRetryBuffer->data, "Re-enter password: ");
+
+    if (passwordBuffer->length != passwordRetryBuffer->length ||
+        memcmp(passwordBuffer->data, passwordRetryBuffer->data, passwordBuffer->length) != 0) {
+      fprintf(stderr, "ERROR: Passwords do not match!\n");
+      exit(EXIT_FAILURE);
+    }
+
+    fprintf(stderr, "# SUCCESS! READ PASSWORD! (%d bytes)\n", passwordBuffer->length);
+  }
+
+  ZigmaContext* cipher = ZigmaCreate(NULL, passwordBuffer->data, passwordBuffer->length);
+
+  ZigmaPrint(cipher);
+
+  uint32 outputBaseFormat = strtoul(format->value, NULL, 10);
+
+  if (outputBaseFormat != 16 && outputBaseFormat != 64 && outputBaseFormat != 256) {
+    fprintf(stderr, "ERROR: Invalid output format '%s'!\n", format->value);
+    exit(EXIT_FAILURE);
+  }
+
+  Buffer* inputBuffer  = BufferCreate(NULL, ZQ_MAX_BUFFER_SIZE);
+  Buffer* outputBuffer = BufferCreate(NULL, 0);
+
+  if (outputBaseFormat == 64)
+    fprintf(outputFile, "### BEGIN CRYPTOGRAM ###\n");
+
+  uint64 count = 0;
+  uint64 total = 0;
+
+  while ((count = fread(inputBuffer->data, 1, ZQ_MAX_BUFFER_SIZE, inputFile)) > 0) {
+    BufferResize(outputBuffer, count + total);
+
+    memcpy(outputBuffer->data + total, inputBuffer->data, count);
+
+    total += count;
+  }
+
+  ZigmaEncodeBuffer(cipher, outputBuffer);
+
+  if (outputBaseFormat == 256) {
+    fwrite(outputBuffer->data, 1, total, outputFile);
+  }
+
+  fprintf(stderr, "# SUCCESS! WROTE %d BYTES!\n", total);
 }
 
 void HandleDecode(RegistryNode** registry)
 {
+  RegistryNode* input  = RegistrySearch(registry, "input");
+  RegistryNode* output = RegistrySearch(registry, "output");
+  RegistryNode* key    = RegistrySearch(registry, "key");
+  RegistryNode* format = RegistrySearch(registry, "format");
+
+  DEBUG_ASSERT(input != NULL);
+  DEBUG_ASSERT(output != NULL);
+  DEBUG_ASSERT(key != NULL);
+  DEBUG_ASSERT(format != NULL);
+
+  FILE* inputFile  = stdin;
+  FILE* outputFile = stdout;
+
   fprintf(stderr, "> MODE = DECODE / DECRYPT\n");
+
+  /* Setup the input. */
+  if (*input->value != 0) {
+    inputFile = fopen(input->value, "r");
+
+    if (inputFile == NULL) {
+      fprintf(stderr, "ERROR: fopen(): unable to open input file '%s': %s\n", input->value, strerror(errno));
+      exit(EXIT_FAILURE);
+    }
+
+    fprintf(stderr, "# SUCCESS! OPEN INPUT FILE: '%s' ...!\n", input->value);
+  }
+  else {
+    fprintf(stderr, "# SUCCESS! INPUT STREAM: <STDIN> ...!\n");
+  }
+
+  /* Setup the output. */
+  if (*output->value != 0) {
+    outputFile = fopen(output->value, "w");
+
+    if (outputFile == NULL) {
+      fprintf(stderr, "ERROR: fopen(): unable to open output file '%s': %s!\n", output->value, strerror(errno));
+      exit(EXIT_FAILURE);
+    }
+
+    fprintf(stderr, "# SUCCESS! OPEN OUTPUT FILE: '%s' ...!\n", output->value);
+  }
+  else {
+    fprintf(stderr, "# SUCCESS! OUTPUT STREAM: <STDOUT> ...!\n");
+  }
+
+  Buffer* passwordBuffer = BufferCreate(NULL, ZQ_MAX_KEY_SIZE);
+
+  if (*key->value != 0) {
+    FILE* keyFile = fopen(key->value, "r");
+
+    if (keyFile == NULL) {
+      fprintf(stderr, "ERROR: fopen(): unable to open key file '%s': %s!\n", key->value, strerror(errno));
+      exit(EXIT_FAILURE);
+    }
+
+    passwordBuffer->length = fread(passwordBuffer->data, 1, ZQ_MAX_KEY_SIZE, keyFile);
+
+    if (passwordBuffer->length == 0) {
+      fprintf(stderr, "ERROR: fread(): unable to read key file '%s': %s!\n", key->value, strerror(errno));
+      exit(EXIT_FAILURE);
+    }
+
+    fprintf(stderr, "# SUCCESS! READ KEY FILE! (%d bytes)\n", passwordBuffer->length);
+  }
+  else {
+    passwordBuffer->length = CaptureKey(passwordBuffer->data, "Enter password: ");
+
+    fprintf(stderr, "# SUCCESS! READ PASSWORD! (%d bytes)\n", passwordBuffer->length);
+  }
+
+  ZigmaContext* cipher = ZigmaCreate(NULL, passwordBuffer->data, passwordBuffer->length);
+
+  ZigmaPrint(cipher);
+
+  uint32 outputBaseFormat = strtoul(format->value, NULL, 10);
+
+  if (outputBaseFormat != 16 && outputBaseFormat != 64 && outputBaseFormat != 256) {
+    fprintf(stderr, "ERROR: Invalid output format '%s'!\n", format->value);
+    exit(EXIT_FAILURE);
+  }
+
+  Buffer* inputBuffer  = BufferCreate(NULL, ZQ_MAX_BUFFER_SIZE);
+  Buffer* outputBuffer = BufferCreate(NULL, 0);
+
+  if (outputBaseFormat == 64)
+    fprintf(outputFile, "### BEGIN CRYPTOGRAM ###\n");
+
+  uint64 count = 0;
+  uint64 total = 0;
+
+  while ((count = fread(inputBuffer->data, 1, ZQ_MAX_BUFFER_SIZE, inputFile)) > 0) {
+    BufferResize(outputBuffer, count + total);
+
+    memcpy(outputBuffer->data + total, inputBuffer->data, count);
+
+    total += count;
+  }
+
+  ZigmaDecodeBuffer(cipher, outputBuffer);
+
+  if (outputBaseFormat == 256) {
+    fwrite(outputBuffer->data, 1, total, outputFile);
+  }
+
+  fprintf(stderr, "# SUCCESS! WROTE %d BYTES!\n", total);
 }
 
 void HandleCheck(RegistryNode** registry)
