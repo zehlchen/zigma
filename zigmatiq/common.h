@@ -66,6 +66,10 @@ unsigned long CaptureKey(uint8* buffer, const uint8* prompt);
 #define ZQ_MAX_KEY_SIZE 256
 #endif
 
+#ifndef ZQ_MAX_BUFFER_SIZE
+#define ZQ_MAX_BUFFER_SIZE 768
+#endif
+
 /*
  * Debug code ... respect no-debug requests.
  */
