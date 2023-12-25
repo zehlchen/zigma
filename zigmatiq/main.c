@@ -108,8 +108,6 @@ OperationFunction ParseRegistry(RegistryNode** registry, int argc, char* argv[])
   for (int i = 0; commands[i].name != NULL; i++) {
     uint32 distance = LevenshteinDistance(commands[i].name, input);
 
-    fprintf(stderr, "distance (%s, %s): %d\n", commands[i].name, input, distance);
-
     if (distance == 0) {
       return commands[i].func;
     }
@@ -143,7 +141,7 @@ void HandleEncode(RegistryNode** registry)
   FILE* inputFile  = stdin;
   FILE* outputFile = stdout;
 
-  fprintf(stderr, "> MODE = ENCODE / ENCRYPT\n");
+  fprintf(stderr, "> MODE = ENCODE\n");
 
   /* Setup the input. */
   if (*input->value != 0) {
@@ -154,10 +152,10 @@ void HandleEncode(RegistryNode** registry)
       exit(EXIT_FAILURE);
     }
 
-    fprintf(stderr, "# SUCCESS! OPEN INPUT FILE: '%s' ...!\n", input->value);
+    fprintf(stderr, "> INPUT STREAM = '%s' ...\n", input->value);
   }
   else {
-    fprintf(stderr, "# SUCCESS! INPUT STREAM: <STDIN> ...!\n");
+    fprintf(stderr, "> INPUT STREAM = <STDIN> ...\n");
   }
 
   /* Setup the output. */
@@ -169,10 +167,10 @@ void HandleEncode(RegistryNode** registry)
       exit(EXIT_FAILURE);
     }
 
-    fprintf(stderr, "# SUCCESS! OPEN OUTPUT FILE: '%s' ...!\n", output->value);
+    fprintf(stderr, "> OUTPUT STREAM = '%s' ...\n", output->value);
   }
   else {
-    fprintf(stderr, "# SUCCESS! OUTPUT STREAM: <STDOUT> ...!\n");
+    fprintf(stderr, "> OUTPUT STREAM = <STDOUT> ...\n");
   }
 
   Buffer* passwordBuffer = BufferCreate(NULL, ZQ_MAX_KEY_SIZE);
@@ -192,7 +190,7 @@ void HandleEncode(RegistryNode** registry)
       exit(EXIT_FAILURE);
     }
 
-    fprintf(stderr, "# SUCCESS! READ KEY FILE! (%d bytes)\n", passwordBuffer->length);
+    fprintf(stderr, "> KEY = '%s' ... (%d bytes)\n", key->value, passwordBuffer->length);
   }
   else {
     Buffer* passwordRetryBuffer = BufferCreate(NULL, ZQ_MAX_KEY_SIZE);
@@ -206,12 +204,10 @@ void HandleEncode(RegistryNode** registry)
       exit(EXIT_FAILURE);
     }
 
-    fprintf(stderr, "# SUCCESS! READ PASSWORD! (%d bytes)\n", passwordBuffer->length);
+    fprintf(stderr, "> KEY = PASSPHRASE! (%d bytes)\n", passwordBuffer->length);
   }
 
   ZigmaContext* cipher = ZigmaCreate(NULL, passwordBuffer->data, passwordBuffer->length);
-
-  ZigmaPrint(cipher);
 
   uint32 outputBaseFormat = strtoul(format->value, NULL, 10);
 
@@ -220,27 +216,22 @@ void HandleEncode(RegistryNode** registry)
     exit(EXIT_FAILURE);
   }
 
-  Buffer* inputBuffer  = BufferCreate(NULL, ZQ_MAX_BUFFER_SIZE);
   Buffer* outputBuffer = BufferCreate(NULL, 0);
 
-  uint64 count = 0;
-  uint64 total = 0;
-
-  while ((count = fread(inputBuffer->data, 1, ZQ_MAX_BUFFER_SIZE, inputFile)) > 0) {
-    BufferResize(outputBuffer, count + total);
-
-    memcpy(outputBuffer->data + total, inputBuffer->data, count);
-
-    total += count;
-  }
+  uint64 total = BufferRead(outputBuffer, inputFile);
 
   ZigmaEncodeBuffer(cipher, outputBuffer);
 
   if (outputBaseFormat == 256) {
     fwrite(outputBuffer->data, 1, total, outputFile);
   }
-
-  fprintf(stderr, "# SUCCESS! WROTE %d BYTES!\n", total);
+  else if (outputBaseFormat == 64) {
+    BufferPrintBase64(outputBuffer, outputFile);
+  }
+  else if (outputBaseFormat == 16) {
+    BufferPrintBase16(outputBuffer, outputFile);
+  }
+  fprintf(stderr, "!COMPLETE! ENCODED %d BYTES!\n", total);
 }
 
 void HandleDecode(RegistryNode** registry)
@@ -258,7 +249,7 @@ void HandleDecode(RegistryNode** registry)
   FILE* inputFile  = stdin;
   FILE* outputFile = stdout;
 
-  fprintf(stderr, "> MODE = DECODE / DECRYPT\n");
+  fprintf(stderr, "> MODE = DECODE\n");
 
   /* Setup the input. */
   if (*input->value != 0) {
@@ -269,10 +260,10 @@ void HandleDecode(RegistryNode** registry)
       exit(EXIT_FAILURE);
     }
 
-    fprintf(stderr, "# SUCCESS! OPEN INPUT FILE: '%s' ...!\n", input->value);
+    fprintf(stderr, "> INPUT STREAM = '%s' ...\n", input->value);
   }
   else {
-    fprintf(stderr, "# SUCCESS! INPUT STREAM: <STDIN> ...!\n");
+    fprintf(stderr, "> INPUT STREAM = <STDIN> ...\n");
   }
 
   /* Setup the output. */
@@ -284,10 +275,10 @@ void HandleDecode(RegistryNode** registry)
       exit(EXIT_FAILURE);
     }
 
-    fprintf(stderr, "# SUCCESS! OPEN OUTPUT FILE: '%s' ...!\n", output->value);
+    fprintf(stderr, "> OUTPUT STREAM = '%s' ...\n", output->value);
   }
   else {
-    fprintf(stderr, "# SUCCESS! OUTPUT STREAM: <STDOUT> ...!\n");
+    fprintf(stderr, "> OUTPUT STREAM = <STDOUT> ...\n");
   }
 
   Buffer* passwordBuffer = BufferCreate(NULL, ZQ_MAX_KEY_SIZE);
@@ -307,17 +298,15 @@ void HandleDecode(RegistryNode** registry)
       exit(EXIT_FAILURE);
     }
 
-    fprintf(stderr, "# SUCCESS! READ KEY FILE! (%d bytes)\n", passwordBuffer->length);
+    fprintf(stderr, "> KEY = '%s' ... (%d bytes)\n", key->value, passwordBuffer->length);
   }
   else {
     passwordBuffer->length = CaptureKey(passwordBuffer->data, "Enter password: ");
 
-    fprintf(stderr, "# SUCCESS! READ PASSWORD! (%d bytes)\n", passwordBuffer->length);
+    fprintf(stderr, "> KEY = PASSPHRASE! (%d bytes)\n", passwordBuffer->length);
   }
 
   ZigmaContext* cipher = ZigmaCreate(NULL, passwordBuffer->data, passwordBuffer->length);
-
-  ZigmaPrint(cipher);
 
   uint32 outputBaseFormat = strtoul(format->value, NULL, 10);
 
@@ -326,19 +315,9 @@ void HandleDecode(RegistryNode** registry)
     exit(EXIT_FAILURE);
   }
 
-  Buffer* inputBuffer  = BufferCreate(NULL, ZQ_MAX_BUFFER_SIZE);
   Buffer* outputBuffer = BufferCreate(NULL, 0);
 
-  uint64 count = 0;
-  uint64 total = 0;
-
-  while ((count = fread(inputBuffer->data, 1, ZQ_MAX_BUFFER_SIZE, inputFile)) > 0) {
-    BufferResize(outputBuffer, count + total);
-
-    memcpy(outputBuffer->data + total, inputBuffer->data, count);
-
-    total += count;
-  }
+  uint64 total = BufferRead(outputBuffer, inputFile);
 
   ZigmaDecodeBuffer(cipher, outputBuffer);
 
@@ -346,7 +325,7 @@ void HandleDecode(RegistryNode** registry)
     fwrite(outputBuffer->data, 1, total, outputFile);
   }
 
-  fprintf(stderr, "# SUCCESS! WROTE %d BYTES!\n", total);
+  fprintf(stderr, "!COMPLETE! DECODED %d BYTES!\n", total);
 }
 
 void HandleCheck(RegistryNode** registry)
