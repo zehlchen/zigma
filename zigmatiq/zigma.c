@@ -195,18 +195,18 @@ void ZigmaPrint(ZigmaContext* context)
   DEBUG_ASSERT(context != NULL);
 
   fprintf(stderr, "! ZIGMA CONTEXT:\n");
-  fprintf(stderr, "  index_A = %d\n", context->index_A);
-  fprintf(stderr, "  index_B = %d\n", context->index_B);
-  fprintf(stderr, "  index_C = %d\n", context->index_C);
-  fprintf(stderr, "  byte_X  = %d\n", context->byte_X);
-  fprintf(stderr, "  byte_Y  = %d\n", context->byte_Y);
-  fprintf(stderr, "  state   = {\n");
+  fprintf(stderr, "  index_A = %02x\n", context->index_A);
+  fprintf(stderr, "  index_B = %02x\n", context->index_B);
+  fprintf(stderr, "  index_C = %02x\n", context->index_C);
+  fprintf(stderr, "  byte_X  = %02x\n", context->byte_X);
+  fprintf(stderr, "  byte_Y  = %02x\n", context->byte_Y);
+  fprintf(stderr, "  state   = {\n    ");
 
   for (int i = 0; i < 256; i++) {
-    fprintf(stderr, "%02x\n", context->state[i]);
+    fprintf(stderr, "%02x", context->state[i]);
 
-    if ((i + 1) % 16 == 0)
-      fprintf(stderr, "\n");
+    if ((i + 1) % 32 == 0)
+      fprintf(stderr, "\n    ");
   }
   fprintf(stderr, "\r  }\n");
 }
