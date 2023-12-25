@@ -22,14 +22,127 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "common.h"
 
-enum OpterationType { OP_UNKNOWN = 0, OP_ENCODE, OP_DECODE, OP_SIGN, OP_CHECK };
+#include "buffer.h"
+#include "registry.h"
+
+typedef enum OperationType { OP_UNKNOWN = 0, OP_ENCODE, OP_DECODE, OP_SIGN, OP_CHECK } OperationType;
+typedef void (*OperationFunction)(RegistryNode** registry);
+
+OperationFunction ParseRegistry(RegistryNode** registry, int argc, char* argv[]);
+
+struct Command {
+  const char*       name;
+  OperationType     op;
+  OperationFunction func;
+};
+
+void HandleEncode(RegistryNode** registry);
+void HandleDecode(RegistryNode** registry);
+void HandleSign(RegistryNode** registry);
+void HandleCheck(RegistryNode** registry);
+
+struct Command commands[] = {{"encode", OP_ENCODE, &HandleEncode},
+                             {"decode", OP_DECODE, &HandleDecode},
+                             {"sign", OP_SIGN, &HandleSign},
+                             {"check", OP_CHECK, &HandleCheck},
+                             {NULL, OP_UNKNOWN, NULL}};
 
 int main(int argc, char* argv[])
 {
   PrintVersion();
-  
+
+  if (argc < 2) {
+    fprintf(stderr, "error: no operation specified!\n");
+    exit(EXIT_FAILURE);
+  }
+
+  RegistryNode* registry = NULL;
+
+  RegistryUpdate(&registry, "input", "");
+  RegistryUpdate(&registry, "output", "");
+  RegistryUpdate(&registry, "key", "");
+  RegistryUpdate(&registry, "format", "64");
+
+  OperationFunction op = ParseRegistry(&registry, argc, argv);
+
+  if (op != NULL) {
+    op(&registry);
+  }
+  else {
+    fprintf(stderr, "error: unknown operation!\n");
+    exit(EXIT_FAILURE);
+  }
+
   return 0;
+}
+
+OperationFunction ParseRegistry(RegistryNode** registry, int argc, char* argv[])
+{
+  for (int i = 2; i < argc; i++) {
+    char* dupl    = strndup(argv[i], ZQ_REGISTRY_KEY_MAX);
+    char* delimit = strchr(dupl, '=');
+    char* key     = dupl;
+    char* value   = "";
+
+    if (delimit != NULL) {
+      *delimit = '\0';
+      value    = delimit + 1;
+    }
+
+    // Add or update the key-value pair.
+    RegistryUpdate(registry, key, value);
+
+    free(dupl);
+  }
+
+  const char* input = argv[1];
+
+  OperationFunction closestMatchOperation = NULL;
+  uint32            closestMatchDistance  = -1;
+
+  for (int i = 0; commands[i].name != NULL; i++) {
+    uint32 distance = LevenshteinDistance(commands[i].name, input);
+
+    fprintf(stderr, "distance (%s, %s): %d\n", commands[i].name, input, distance);
+
+    if (distance == 0) {
+      return commands[i].func;
+    }
+
+    // Prioritize command if it starts with the input substring
+    if (strncmp(commands[i].name, input, strlen(input)) == 0) {
+      return commands[i].func;
+    }
+
+    if (distance < closestMatchDistance) {
+      closestMatchDistance  = distance;
+      closestMatchOperation = commands[i].func;
+    }
+  }
+
+  return closestMatchOperation;
+}
+
+void HandleEncode(RegistryNode** registry)
+{
+  fprintf(stderr, "mode: encode\n");
+}
+
+void HandleDecode(RegistryNode** registry)
+{
+  fprintf(stderr, "mode: decode\n");
+}
+
+void HandleSign(RegistryNode** registry)
+{
+  fprintf(stderr, "mode: sign\n");
+}
+
+void HandleCheck(RegistryNode** registry)
+{
+  fprintf(stderr, "mode: check\n");
 }
