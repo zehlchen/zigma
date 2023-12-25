@@ -101,4 +101,8 @@ void ZigmaEncodeBuffer(ZigmaContext* context, Buffer* buffer);
  */
 void ZigmaDecodeBuffer(ZigmaContext* context, Buffer* buffer);
 
+/* Print the context.
+ */
+void ZigmaPrint(ZigmaContext* context);
+
 #endif /* _ZIGMATIQ_ZIGMA_H_ */
