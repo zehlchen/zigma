@@ -179,7 +179,8 @@ void HandleEncode(RegistryNode** registry)
       exit(EXIT_FAILURE);
     }
 
-    fprintf(stderr, "> KEY = '%s' ... (%d bytes)\n", key->value, passwordBuffer->length);
+    fprintf(stderr, "> KEY = '%s' ... %d/%d (%f%%) bytes\n", key->value, passwordBuffer->length, ZQ_MAX_KEY_SIZE,
+            (float) passwordBuffer->length / (float) ZQ_MAX_KEY_SIZE * 100.0f);
   }
   else {
     Buffer* passwordRetryBuffer = BufferCreate(NULL, ZQ_MAX_KEY_SIZE);
@@ -193,7 +194,8 @@ void HandleEncode(RegistryNode** registry)
       exit(EXIT_FAILURE);
     }
 
-    fprintf(stderr, "> KEY = PASSPHRASE! (%d bytes)\n", passwordBuffer->length);
+    fprintf(stderr, "> KEY = PASSPHRASE! %d/%d (%f%%) bytes\n", passwordBuffer->length, ZQ_MAX_KEY_SIZE,
+            (float) passwordBuffer->length / (float) ZQ_MAX_KEY_SIZE * 100.0f);
   }
 
   ZigmaContext* cipher = ZigmaCreate(NULL, passwordBuffer->data, passwordBuffer->length);
@@ -276,12 +278,14 @@ void HandleDecode(RegistryNode** registry)
       exit(EXIT_FAILURE);
     }
 
-    fprintf(stderr, "> KEY = '%s' ... (%d bytes)\n", key->value, passwordBuffer->length);
+    fprintf(stderr, "> KEY = '%s' ... %d/%d (%f%%) bytes\n", key->value, passwordBuffer->length, ZQ_MAX_KEY_SIZE,
+            (float) passwordBuffer->length / (float) ZQ_MAX_KEY_SIZE * 100.0f);
   }
   else {
     passwordBuffer->length = CaptureKey(passwordBuffer->data, "Enter password: ");
 
-    fprintf(stderr, "> KEY = PASSPHRASE! (%d bytes)\n", passwordBuffer->length);
+    fprintf(stderr, "> KEY = PASSPHRASE! %d/%d (%f%%) bytes\n", passwordBuffer->length, ZQ_MAX_KEY_SIZE,
+            (float) passwordBuffer->length / (float) ZQ_MAX_KEY_SIZE * 100.0f);
   }
 
   ZigmaContext* cipher = ZigmaCreate(NULL, passwordBuffer->data, passwordBuffer->length);
