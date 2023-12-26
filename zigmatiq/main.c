@@ -145,12 +145,7 @@ void HandleEncode(RegistryNode** registry)
 
   /* Setup the input. */
   if (*input->value != 0) {
-    inputFile = fopen(input->value, "r");
-
-    if (inputFile == NULL) {
-      fprintf(stderr, "ERROR: fopen(): unable to open input file '%s': %s\n", input->value, strerror(errno));
-      exit(EXIT_FAILURE);
-    }
+    inputFile = OpenFile(input->value, "r");
 
     fprintf(stderr, "> INPUT STREAM = '%s' ...\n", input->value);
   }
@@ -160,12 +155,7 @@ void HandleEncode(RegistryNode** registry)
 
   /* Setup the output. */
   if (*output->value != 0) {
-    outputFile = fopen(output->value, "w");
-
-    if (outputFile == NULL) {
-      fprintf(stderr, "ERROR: fopen(): unable to open output file '%s': %s!\n", output->value, strerror(errno));
-      exit(EXIT_FAILURE);
-    }
+    outputFile = OpenFile(output->value, "w");
 
     fprintf(stderr, "> OUTPUT STREAM = '%s' ...\n", output->value);
   }
@@ -176,17 +166,16 @@ void HandleEncode(RegistryNode** registry)
   Buffer* passwordBuffer = BufferCreate(NULL, ZQ_MAX_KEY_SIZE);
 
   if (*key->value != 0) {
-    FILE* keyFile = fopen(key->value, "r");
+    FILE* keyFile = OpenFile(key->value, "r");
 
-    if (keyFile == NULL) {
-      fprintf(stderr, "ERROR: fopen(): unable to open key file '%s': %s!\n", key->value, strerror(errno));
-      exit(EXIT_FAILURE);
-    }
-
+#if 0
     passwordBuffer->length = fread(passwordBuffer->data, 1, ZQ_MAX_KEY_SIZE, keyFile);
+#endif
 
-    if (passwordBuffer->length == 0) {
-      fprintf(stderr, "ERROR: fread(): unable to read key file '%s': %s!\n", key->value, strerror(errno));
+    BufferRead(passwordBuffer, keyFile);
+
+    if (passwordBuffer->length > ZQ_MAX_KEY_SIZE) {
+      fprintf(stderr, "ERROR: Key file '%s' is too large!\n", key->value);
       exit(EXIT_FAILURE);
     }
 
@@ -253,12 +242,7 @@ void HandleDecode(RegistryNode** registry)
 
   /* Setup the input. */
   if (*input->value != 0) {
-    inputFile = fopen(input->value, "r");
-
-    if (inputFile == NULL) {
-      fprintf(stderr, "ERROR: fopen(): unable to open input file '%s': %s\n", input->value, strerror(errno));
-      exit(EXIT_FAILURE);
-    }
+    inputFile = OpenFile(input->value, "r");
 
     fprintf(stderr, "> INPUT STREAM = '%s' ...\n", input->value);
   }
@@ -268,12 +252,7 @@ void HandleDecode(RegistryNode** registry)
 
   /* Setup the output. */
   if (*output->value != 0) {
-    outputFile = fopen(output->value, "w");
-
-    if (outputFile == NULL) {
-      fprintf(stderr, "ERROR: fopen(): unable to open output file '%s': %s!\n", output->value, strerror(errno));
-      exit(EXIT_FAILURE);
-    }
+    outputFile = OpenFile(output->value, "w");
 
     fprintf(stderr, "> OUTPUT STREAM = '%s' ...\n", output->value);
   }
@@ -284,17 +263,16 @@ void HandleDecode(RegistryNode** registry)
   Buffer* passwordBuffer = BufferCreate(NULL, ZQ_MAX_KEY_SIZE);
 
   if (*key->value != 0) {
-    FILE* keyFile = fopen(key->value, "r");
+    FILE* keyFile = OpenFile(key->value, "r");
 
-    if (keyFile == NULL) {
-      fprintf(stderr, "ERROR: fopen(): unable to open key file '%s': %s!\n", key->value, strerror(errno));
-      exit(EXIT_FAILURE);
-    }
-
+#if 0
     passwordBuffer->length = fread(passwordBuffer->data, 1, ZQ_MAX_KEY_SIZE, keyFile);
+#endif
 
-    if (passwordBuffer->length == 0) {
-      fprintf(stderr, "ERROR: fread(): unable to read key file '%s': %s!\n", key->value, strerror(errno));
+    BufferRead(passwordBuffer, keyFile);
+
+    if (passwordBuffer->length > ZQ_MAX_KEY_SIZE) {
+      fprintf(stderr, "ERROR: Key file '%s' is too large!\n", key->value);
       exit(EXIT_FAILURE);
     }
 
