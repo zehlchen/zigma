@@ -62,7 +62,7 @@ FILE* OpenFile(const char* filename, const char* mode);
 
 /* Define the length in bytes of the checksum. */
 #ifndef ZIGMA_CHECKSUM_SIZE
-#define ZIGMA_CHECKSUM_SIZE 32 /* 256 bits */
+#define ZIGMA_CHECKSUM_SIZE 36 /* 288 bits */
 #endif
 
 /* Define the maximum length of a passkey. */
