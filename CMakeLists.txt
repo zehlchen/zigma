@@ -22,7 +22,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 project (zigmatiq
-  VERSION 2.0.0
+  VERSION 2.0.1
   DESCRIPTION "ZIGMAtiq is a command line utility for encrypting, decrypting, and signing files."
 )
 
