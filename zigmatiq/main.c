@@ -312,5 +312,52 @@ void HandleDecode(RegistryNode** registry)
 
 void HandleCheck(RegistryNode** registry)
 {
-  fprintf(stderr, "> MODE = CHECK\n");
+  RegistryNode* input  = RegistrySearch(registry, "input");
+  RegistryNode* format = RegistrySearch(registry, "format");
+
+  DEBUG_ASSERT(input != NULL);
+  DEBUG_ASSERT(format != NULL);
+
+  FILE* inputFile = stdin;
+
+  fprintf(stderr, "> MODE = CHECKSUM\n");
+
+  /* Setup the input. */
+  if (*input->value != 0) {
+    inputFile = OpenFile(input->value, "r");
+
+    fprintf(stderr, "> INPUT STREAM = '%s' ...\n", input->value);
+  }
+  else {
+    fprintf(stderr, "> INPUT STREAM = <STDIN> ...\n");
+  }
+
+  ZigmaContext* cipher       = ZigmaCreate(NULL, NULL, 0);
+  Buffer*       outputBuffer = BufferCreate(NULL, 0);
+  uint64        total        = BufferRead(outputBuffer, inputFile);
+
+  ZigmaEncodeBuffer(cipher, outputBuffer);
+
+  Buffer* checksumBuffer = BufferCreate(NULL, ZIGMA_CHECKSUM_SIZE);
+
+  ZigmaHashFinal(cipher, checksumBuffer->data, ZIGMA_CHECKSUM_SIZE);
+
+  uint32 outputBaseFormat = strtoul(format->value, NULL, 10);
+
+  fprintf(stderr, "> CHECKSUM = ");
+  if (outputBaseFormat == 16) {
+    for (int i = 0; i < ZIGMA_CHECKSUM_SIZE; i++) {
+      fprintf(stderr, "%02x", checksumBuffer->data[i]);
+    }
+  }
+  else if (outputBaseFormat == 64) {
+    char*  encoded = malloc(4 * ((checksumBuffer->length + 2) / 3));
+    uint64 length  = base64_encode(encoded, (char*) checksumBuffer->data, ZIGMA_CHECKSUM_SIZE);
+
+    for (int i = 0; i < length; i++) {
+      fprintf(stderr, "%c", encoded[i]);
+    }
+
+    fprintf(stderr, " (%d bytees)\n", total);
+  }
 }
