@@ -110,7 +110,7 @@ RegistryNode* RegistryUpdate(RegistryNode** head, const char* key, const char* v
   return current;
 }
 
-void RegistryForEach(RegistryNode* head, RegistryCallback callback)
+void RegistryForEach(RegistryNode** head, RegistryCallback callback)
 {
   DEBUG_ASSERT(head != NULL);
   DEBUG_ASSERT(callback != NULL);
