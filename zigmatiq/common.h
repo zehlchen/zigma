@@ -24,6 +24,8 @@
 #ifndef _ZIGMATIQ_COMMON_H_
 #define _ZIGMATIQ_COMMON_H_
 
+#include <stdio.h>
+
 #include "typedef.h"
 
 #ifndef ZIGMATIQ_GIT_BUILD
@@ -55,6 +57,8 @@ uint32 uint32_min(uint32 a, uint32 b);
 uint32 LevenshteinDistance(const char* s, const char* t);
 
 unsigned long CaptureKey(uint8* buffer, const uint8* prompt);
+
+FILE* OpenFile(const char* filename, const char* mode);
 
 /* Define the length in bytes of the checksum. */
 #ifndef ZIGMA_CHECKSUM_SIZE

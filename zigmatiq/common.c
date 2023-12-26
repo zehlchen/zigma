@@ -20,6 +20,7 @@
  *
  */
 
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -134,4 +135,16 @@ void PrintHex(Buffer* buffer)
       fprintf(stderr, " ");
   }
   fprintf(stderr, "\n");
+}
+
+FILE* OpenFile(const char* filename, const char* mode)
+{
+  FILE* file = fopen(filename, mode);
+
+  if (file == NULL) {
+    fprintf(stderr, "ERROR: fopen(): unable to open file '%s': %s!\n", filename, strerror(errno));
+    exit(EXIT_FAILURE);
+  }
+
+  return file;
 }
