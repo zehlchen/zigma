@@ -72,6 +72,6 @@ RegistryNode* RegistryUpdate(RegistryNode** head, const char* key, const char* v
  * @param head      The head of the list
  * @param callback  The callback to apply
  */
-void RegistryForEach(RegistryNode* head, RegistryCallback callback);
+void RegistryForEach(RegistryNode** head, RegistryCallback callback);
 
 #endif /* _ZIGMATIQ_REGISTRY_H_ */

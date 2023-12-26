@@ -115,7 +115,7 @@ void RegistryForEach(RegistryNode** head, RegistryCallback callback)
   DEBUG_ASSERT(head != NULL);
   DEBUG_ASSERT(callback != NULL);
 
-  RegistryNode* current = head;
+  RegistryNode* current = *head;
 
   while (current != NULL) {
     callback(current);
