@@ -19,8 +19,8 @@ AllowShortLoopsOnASingleLine: 'false'
 AlwaysBreakAfterReturnType: None
 AlwaysBreakBeforeMultilineStrings: 'false'
 AlwaysBreakTemplateDeclarations: 'Yes'
-BinPackArguments: 'false'
-BinPackParameters: 'false'
+BinPackArguments: 'true'
+BinPackParameters: 'true'
 BreakBeforeBraces: Stroustrup
 BreakBeforeTernaryOperators: 'true'
 BreakConstructorInitializers: BeforeColon 
