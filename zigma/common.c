@@ -36,7 +36,8 @@
 
 void PrintVersion()
 {
-  fprintf(stderr, "ZIGMA-%s/%s@%s\n", ZIGMATIQ_VERSION_STRING, ZIGMATIQ_GIT_BRANCH, ZIGMATIQ_GIT_COMMIT);
+  fprintf(stderr, "ZIGMA-%s/%s@%s(%s)\n", ZIGMATIQ_VERSION_STRING, ZIGMATIQ_GIT_BRANCH, ZIGMATIQ_GIT_COMMIT,
+          ZIGMATIQ_GIT_TAG);
   fprintf(stderr, "  Copyright (C) 2024 Chase Zehl O'Byrne <zehl (at) live.com>\n\n");
 
 #if 0
