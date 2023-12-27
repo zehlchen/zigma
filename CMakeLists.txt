@@ -21,9 +21,9 @@
 
 cmake_minimum_required(VERSION 3.16)
 
-project (zigmatiq
+project (zigma
   VERSION 2.1.0
-  DESCRIPTION "ZIGMAtiq is a command line utility for encrypting, decrypting, and signing files."
+  DESCRIPTION "ZIGMA is a command line utility for encrypting, decrypting, and signing files."
 )
 
 execute_process(
@@ -58,12 +58,12 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_executable(zigma)
 target_sources(zigma PRIVATE
-  zigmatiq/base64.c
-  zigmatiq/buffer.c
-  zigmatiq/common.c
-  zigmatiq/main.c
-  zigmatiq/registry.c
-  zigmatiq/zigma.c
+  zigma/base64.c
+  zigma/buffer.c
+  zigma/common.c
+  zigma/main.c
+  zigma/registry.c
+  zigma/zigma.c
 )
 
 add_compile_definitions(
