@@ -50,8 +50,6 @@
 
 #define ZIGMATIQ_VERSION_STRING_SHORT "ZIGMA-" ZIGMATIQ_VERSION_STRING
 
-void PrintVersion();
-
 uint32 uint32_min(uint32 a, uint32 b);
 
 uint32 LevenshteinDistance(const char* s, const char* t);

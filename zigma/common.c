@@ -34,17 +34,6 @@
 
 #include "buffer.h"
 
-void PrintVersion()
-{
-  fprintf(stderr, "ZIGMA-%s/%s@%s(%s)\n", ZIGMATIQ_VERSION_STRING, ZIGMATIQ_GIT_BRANCH, ZIGMATIQ_GIT_COMMIT,
-          ZIGMATIQ_GIT_TAG);
-  fprintf(stderr, "  Copyright (C) 2024 Chase Zehl O'Byrne <zehl (at) live.com>\n\n");
-
-#if 0
-  fprintf(stderr, "  Built: %s (%s) - %s\n", __DATE__, __TIME__, __VERSION__);
-#endif
-}
-
 void Nullify(void* ptr, uint64 size)
 {
   volatile unsigned char* _ptr = ptr;
