@@ -160,7 +160,7 @@ void HandleEncode(RegistryNode** registry)
   if (*key->value != 0) {
     FILE* keyFile = OpenFile(key->value, "r");
 
-    BufferRead(passwordBuffer, keyFile);
+    BufferReadBase256(passwordBuffer, keyFile);
 
     if (passwordBuffer->length > ZQ_MAX_KEY_SIZE) {
       fprintf(stderr, "ERROR: Key file '%s' is too large!\n", key->value);
@@ -191,7 +191,14 @@ void HandleEncode(RegistryNode** registry)
 
   Buffer* outputBuffer = BufferCreate(NULL, 0);
 
-  uint64 total = BufferRead(outputBuffer, inputFile);
+  uint64 total;
+
+  if (inputBaseFormat == 16)
+    total = BufferReadBase16(outputBuffer, inputFile);
+  else if (inputBaseFormat == 64)
+    total = BufferReadBase64(outputBuffer, inputFile);
+  else
+    total = BufferReadBase256(outputBuffer, inputFile);
 
   ZigmaEncodeBuffer(cipher, outputBuffer);
 
@@ -236,11 +243,7 @@ void HandleDecode(RegistryNode** registry)
   if (*key->value != 0) {
     FILE* keyFile = OpenFile(key->value, "r");
 
-#if 0
-    passwordBuffer->length = fread(passwordBuffer->data, 1, ZQ_MAX_KEY_SIZE, keyFile);
-#endif
-
-    BufferRead(passwordBuffer, keyFile);
+    BufferReadBase256(passwordBuffer, keyFile);
 
     if (passwordBuffer->length > ZQ_MAX_KEY_SIZE) {
       fprintf(stderr, "ERROR: Key file '%s' is too large!\n", key->value);
@@ -262,12 +265,25 @@ void HandleDecode(RegistryNode** registry)
 
   Buffer* outputBuffer = BufferCreate(NULL, 0);
 
-  uint64 total = BufferRead(outputBuffer, inputFile);
+  uint64 total;
+
+  if (inputBaseFormat == 16)
+    total = BufferReadBase16(outputBuffer, inputFile);
+  else if (inputBaseFormat == 64)
+    total = BufferReadBase64(outputBuffer, inputFile);
+  else
+    total = BufferReadBase256(outputBuffer, inputFile);
 
   ZigmaDecodeBuffer(cipher, outputBuffer);
 
   if (outputBaseFormat == 256) {
     fwrite(outputBuffer->data, 1, total, outputFile);
+  }
+  else if (outputBaseFormat == 64) {
+    BufferPrintBase64(outputBuffer, outputFile);
+  }
+  else if (outputBaseFormat == 16) {
+    BufferPrintBase16(outputBuffer, outputFile);
   }
 
   fprintf(stderr, "!COMPLETE! DECODED %d BYTES!\n", total);
@@ -297,7 +313,7 @@ void HandleCheck(RegistryNode** registry)
 
   ZigmaContext* cipher       = ZigmaCreate(NULL, NULL, 0);
   Buffer*       outputBuffer = BufferCreate(NULL, 0);
-  uint64        total        = BufferRead(outputBuffer, inputFile);
+  uint64        total        = BufferReadBase256(outputBuffer, inputFile);
 
   ZigmaEncodeBuffer(cipher, outputBuffer);
 
