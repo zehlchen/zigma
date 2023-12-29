@@ -103,6 +103,8 @@ uint64 BufferPrintBase64(Buffer* buffer, FILE* stream);
  *   @param stream The stream to read from.
  *   @return The number of bytes read.
  */
-uint64 BufferRead(Buffer* buffer, FILE* stream);
+uint64 BufferReadBase256(Buffer* buffer, FILE* stream);
+uint64 BufferReadBase64(Buffer* buffer, FILE* stream);
+uint64 BufferReadBase16(Buffer* buffer, FILE* stream);
 
 #endif /* _ZIGMATIQ_BUFFER_H_ */

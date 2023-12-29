@@ -126,16 +126,10 @@ void BufferDebugPrint(const Buffer* buffer)
 
 uint64 BufferPrintBase16(Buffer* buffer, FILE* stream)
 {
-  fprintf(stream, "    *** BEGIN BASE16 ENCODED DATA ***\n");
-
   for (uint64 i = 0; i < buffer->length; i++) {
     fprintf(stream, "%02x", buffer->data[i]);
-
-    if ((i + 1) % 64 == 0)
-      fprintf(stream, "\n");
   }
 
-  fprintf(stream, "\n    *** END BASE16 ENCODED DATA ***\n");
   fflush(stream);
 
   return buffer->length * 2;
@@ -146,8 +140,6 @@ uint64 BufferPrintBase64(Buffer* buffer, FILE* stream)
   char*  encoded = malloc(2 * buffer->length); /* malloc(4 * ((buffer->length + 2) / 3)); */
   uint64 length  = base64_encode(encoded, (char*) buffer->data, buffer->length);
 
-  fprintf(stream, "    *** BEGIN BASE64 ENCODED DATA ***\n");
-
   for (int i = 0; i < length; i++) {
     fprintf(stream, "%c", encoded[i]);
 
@@ -155,7 +147,6 @@ uint64 BufferPrintBase64(Buffer* buffer, FILE* stream)
       fprintf(stream, "\n");
   }
 
-  fprintf(stream, "\n    *** END BASE64 ENCODED DATA ***\n");
   fflush(stream);
 
   free(encoded);
@@ -163,7 +154,7 @@ uint64 BufferPrintBase64(Buffer* buffer, FILE* stream)
   return length;
 }
 
-uint64 BufferRead(Buffer* buffer, FILE* stream)
+uint64 BufferReadBase256(Buffer* buffer, FILE* stream)
 {
   DEBUG_ASSERT(buffer != NULL);
   DEBUG_ASSERT(stream != NULL);
@@ -181,6 +172,87 @@ uint64 BufferRead(Buffer* buffer, FILE* stream)
     total += count;
   }
 
+  free(data);
+
+  return total;
+}
+
+uint64 BufferReadBase16(Buffer* buffer, FILE* stream)
+{
+  DEBUG_ASSERT(buffer != NULL);
+  DEBUG_ASSERT(stream != NULL);
+
+  uint8* data = malloc(ZQ_MAX_BUFFER_SIZE);
+
+  uint64 count = 0;
+  uint64 total = 0;
+
+  while ((count = fread(data, 1, ZQ_MAX_BUFFER_SIZE, stream)) > 0) {
+    BufferResize(buffer, count + total);
+
+    for (int i = 0; i < count; i += 2) {
+      uint8 byte = 0;
+
+      if (data[i] >= '0' && data[i] <= '9')
+        byte = data[i] - '0';
+      else if (data[i] >= 'a' && data[i] <= 'f')
+        byte = data[i] - 'a' + 10;
+      else if (data[i] >= 'A' && data[i] <= 'F')
+        byte = data[i] - 'A' + 10;
+      else
+        continue;
+
+      byte <<= 4;
+
+      if (data[i + 1] >= '0' && data[i + 1] <= '9')
+        byte |= data[i + 1] - '0';
+      else if (data[i + 1] >= 'a' && data[i + 1] <= 'f')
+        byte |= data[i + 1] - 'a' + 10;
+      else if (data[i + 1] >= 'A' && data[i + 1] <= 'F')
+        byte |= data[i + 1] - 'A' + 10;
+      else
+        continue;
+
+      buffer->data[total++] = byte;
+    }
+  }
+
+  free(data);
+
+  return total;
+}
+
+uint64 BufferReadBase64(Buffer* buffer, FILE* stream)
+{
+  DEBUG_ASSERT(buffer != NULL);
+  DEBUG_ASSERT(stream != NULL);
+
+  Buffer* readBuffer = BufferCreate(NULL, ZQ_MAX_BUFFER_SIZE);
+
+  char* data = malloc(ZQ_MAX_BUFFER_SIZE);
+
+  uint64 count = 0;
+  uint64 total = 0;
+
+  while ((count = fread(data, 1, ZQ_MAX_BUFFER_SIZE, stream)) > 0) {
+    BufferResize(readBuffer, count + total);
+    memcpy(readBuffer->data + total, data, count);
+    memset(data, 0, ZQ_MAX_BUFFER_SIZE);
+    total += count;
+  }
+
+  uint8* sanitized        = malloc(total);
+  uint64 sanitized_length = base64_sanitize(sanitized, readBuffer->data, total);
+
+  fprintf(stderr, "\n\n");
+  fprintf(stderr, "sanitized: %s\n", sanitized);
+  fprintf(stderr, "sanitized_length: %lu\n", sanitized_length);
+
+  buffer->length = base64_decode(buffer->data, sanitized, sanitized_length);
+
+  BufferDebugPrint(buffer);
+
+  free(sanitized);
   free(data);
 
   return total;
