@@ -343,7 +343,8 @@ void HandleCheck(RegistryNode** registry)
 
 void HandleHelp(RegistryNode** registry)
 {
-  fprintf(stderr, "Usage: zigma OPERATION [OPERAND...]");
+  fprintf(stderr, "Usage: zigma OPERATION [OPERAND...]\n");
+  fprintf(stderr, "\n");
   fprintf(stderr, "OPERATION must be one one of the following:\n");
   fprintf(stderr, "  encode, decode, check, help, version\n");
   fprintf(stderr, "\n");
