@@ -134,10 +134,10 @@ unsigned int base64_decode(char* data, char const* buffer, unsigned long length)
   DEBUG_ASSERT(data != NULL);
 
   for (unsigned long i = 0, j = 0; i < length;) {
-    unsigned long sextet_a = buffer[i] == '=' ? 0 & i++ : base64_char_value(data[i++]);
-    unsigned long sextet_b = buffer[i] == '=' ? 0 & i++ : base64_char_value(data[i++]);
-    unsigned long sextet_c = buffer[i] == '=' ? 0 & i++ : base64_char_value(data[i++]);
-    unsigned long sextet_d = buffer[i] == '=' ? 0 & i++ : base64_char_value(data[i++]);
+    unsigned long sextet_a = buffer[i] == '=' ? 0 & i++ : base64_char_value(buffer[i++]);
+    unsigned long sextet_b = buffer[i] == '=' ? 0 & i++ : base64_char_value(buffer[i++]);
+    unsigned long sextet_c = buffer[i] == '=' ? 0 & i++ : base64_char_value(buffer[i++]);
+    unsigned long sextet_d = buffer[i] == '=' ? 0 & i++ : base64_char_value(buffer[i++]);
 
     unsigned long triple = (sextet_a << 3 * 6) + (sextet_b << 2 * 6) + (sextet_c << 1 * 6) + (sextet_d << 0 * 6);
 
