@@ -32,7 +32,7 @@
 #include "registry.h"
 #include "zigma.h"
 
-typedef enum OperationType { OP_UNKNOWN = 0, OP_ENCODE, OP_DECODE, OP_CHECK } OperationType;
+typedef enum OperationType { OP_UNKNOWN = 0, OP_ENCODE, OP_DECODE, OP_CHECK, OP_HELP, OP_VERSION } OperationType;
 typedef void (*OperationFunction)(RegistryNode** registry);
 
 OperationFunction ParseRegistry(RegistryNode** registry, int argc, char* argv[]);
@@ -46,11 +46,14 @@ struct Command {
 void HandleEncode(RegistryNode** registry);
 void HandleDecode(RegistryNode** registry);
 void HandleCheck(RegistryNode** registry);
+void HandleHelp(RegistryNode** registry);
+void HandleVersion(RegistryNode** registry);
 
-struct Command commands[] = {{"encode", OP_ENCODE, &HandleEncode},
-                             {"decode", OP_DECODE, &HandleDecode},
-                             {"check", OP_CHECK, &HandleCheck},
-                             {NULL, OP_UNKNOWN, NULL}};
+void PrintVersion();
+
+struct Command commands[] = {{"encode", OP_ENCODE, &HandleEncode},    {"decode", OP_DECODE, &HandleDecode},
+                             {"check", OP_CHECK, &HandleCheck},       {"help", OP_HELP, &HandleHelp},
+                             {"version", OP_VERSION, &HandleVersion}, {NULL, OP_UNKNOWN, NULL}};
 
 int main(int argc, char* argv[])
 {
@@ -63,10 +66,13 @@ int main(int argc, char* argv[])
 
   RegistryNode* registry = NULL;
 
-  RegistryUpdate(&registry, "input", "");    /* NULL = stdin */
-  RegistryUpdate(&registry, "output", "");   /* NULL = stdout */
-  RegistryUpdate(&registry, "key", "");      /* NULL = stdin */
-  RegistryUpdate(&registry, "format", "64"); /* Base 16, 64, 256 */
+  /* Load the defaults. */
+  RegistryUpdate(&registry, "in", "");         /* NULL = stdin */
+  RegistryUpdate(&registry, "in.fmt", "256");  /* 256 = binary */
+  RegistryUpdate(&registry, "out", "");        /* NULL = stdout */
+  RegistryUpdate(&registry, "out.fmt", "256"); /* 256 = binary */
+  RegistryUpdate(&registry, "key", "");        /* NULL = stdin */
+  RegistryUpdate(&registry, "key.fmt", "256"); /* 256 = binary */
 
   OperationFunction op = ParseRegistry(&registry, argc, argv);
 
@@ -128,8 +134,8 @@ OperationFunction ParseRegistry(RegistryNode** registry, int argc, char* argv[])
 
 void HandleEncode(RegistryNode** registry)
 {
-  RegistryNode* input  = RegistrySearch(registry, "input");
-  RegistryNode* output = RegistrySearch(registry, "output");
+  RegistryNode* input  = RegistrySearch(registry, "in");
+  RegistryNode* output = RegistrySearch(registry, "out");
   RegistryNode* key    = RegistrySearch(registry, "key");
   RegistryNode* format = RegistrySearch(registry, "format");
 
@@ -141,36 +147,23 @@ void HandleEncode(RegistryNode** registry)
   FILE* inputFile  = stdin;
   FILE* outputFile = stdout;
 
-  fprintf(stderr, "> MODE = ENCODE\n");
+  fprintf(stderr, "   mode = encode\n");
+  fprintf(stderr, "  input = %s\n", *input->value != 0 ? input->value : "<STDIN>");
+  fprintf(stderr, " output = %s\n", *output->value != 0 ? output->value : "<STDOUT>");
+  fprintf(stderr, " format = %s\n", format->value);
 
   /* Setup the input. */
-  if (*input->value != 0) {
+  if (*input->value != 0)
     inputFile = OpenFile(input->value, "r");
 
-    fprintf(stderr, "> INPUT STREAM = '%s' ...\n", input->value);
-  }
-  else {
-    fprintf(stderr, "> INPUT STREAM = <STDIN> ...\n");
-  }
-
   /* Setup the output. */
-  if (*output->value != 0) {
+  if (*output->value != 0)
     outputFile = OpenFile(output->value, "w");
-
-    fprintf(stderr, "> OUTPUT STREAM = '%s' ...\n", output->value);
-  }
-  else {
-    fprintf(stderr, "> OUTPUT STREAM = <STDOUT> ...\n");
-  }
 
   Buffer* passwordBuffer = BufferCreate(NULL, ZQ_MAX_KEY_SIZE);
 
   if (*key->value != 0) {
     FILE* keyFile = OpenFile(key->value, "r");
-
-#if 0
-    passwordBuffer->length = fread(passwordBuffer->data, 1, ZQ_MAX_KEY_SIZE, keyFile);
-#endif
 
     BufferRead(passwordBuffer, keyFile);
 
@@ -178,9 +171,6 @@ void HandleEncode(RegistryNode** registry)
       fprintf(stderr, "ERROR: Key file '%s' is too large!\n", key->value);
       exit(EXIT_FAILURE);
     }
-
-    fprintf(stderr, "> KEY = '%s' ... %d/%d (%f%%) bytes\n", key->value, passwordBuffer->length, ZQ_MAX_KEY_SIZE,
-            (float) passwordBuffer->length / (float) ZQ_MAX_KEY_SIZE * 100.0f);
   }
   else {
     Buffer* passwordRetryBuffer = BufferCreate(NULL, ZQ_MAX_KEY_SIZE);
@@ -193,10 +183,10 @@ void HandleEncode(RegistryNode** registry)
       fprintf(stderr, "ERROR: Passwords do not match!\n");
       exit(EXIT_FAILURE);
     }
-
-    fprintf(stderr, "> KEY = PASSPHRASE! %d/%d (%f%%) bytes\n", passwordBuffer->length, ZQ_MAX_KEY_SIZE,
-            (float) passwordBuffer->length / (float) ZQ_MAX_KEY_SIZE * 100.0f);
   }
+
+  fprintf(stderr, "    key = %s ... %d/%d (%f%%) bytes\n\n", *key->value != 0 ? key->value : "<PASSPHRASE>",
+          passwordBuffer->length, ZQ_MAX_KEY_SIZE, (float) passwordBuffer->length / (float) ZQ_MAX_KEY_SIZE * 100.0f);
 
   ZigmaContext* cipher = ZigmaCreate(NULL, passwordBuffer->data, passwordBuffer->length);
 
@@ -227,8 +217,8 @@ void HandleEncode(RegistryNode** registry)
 
 void HandleDecode(RegistryNode** registry)
 {
-  RegistryNode* input  = RegistrySearch(registry, "input");
-  RegistryNode* output = RegistrySearch(registry, "output");
+  RegistryNode* input  = RegistrySearch(registry, "in");
+  RegistryNode* output = RegistrySearch(registry, "out");
   RegistryNode* key    = RegistrySearch(registry, "key");
   RegistryNode* format = RegistrySearch(registry, "format");
 
@@ -240,27 +230,18 @@ void HandleDecode(RegistryNode** registry)
   FILE* inputFile  = stdin;
   FILE* outputFile = stdout;
 
-  fprintf(stderr, "> MODE = DECODE\n");
+  fprintf(stderr, "   mode = decode\n");
+  fprintf(stderr, "  input = %s\n", *input->value != 0 ? input->value : "<STDIN>");
+  fprintf(stderr, " output = %s\n", *output->value != 0 ? output->value : "<STDOUT>");
+  fprintf(stderr, " format = %s\n", format->value);
 
   /* Setup the input. */
-  if (*input->value != 0) {
+  if (*input->value != 0)
     inputFile = OpenFile(input->value, "r");
 
-    fprintf(stderr, "> INPUT STREAM = '%s' ...\n", input->value);
-  }
-  else {
-    fprintf(stderr, "> INPUT STREAM = <STDIN> ...\n");
-  }
-
   /* Setup the output. */
-  if (*output->value != 0) {
+  if (*output->value != 0)
     outputFile = OpenFile(output->value, "w");
-
-    fprintf(stderr, "> OUTPUT STREAM = '%s' ...\n", output->value);
-  }
-  else {
-    fprintf(stderr, "> OUTPUT STREAM = <STDOUT> ...\n");
-  }
 
   Buffer* passwordBuffer = BufferCreate(NULL, ZQ_MAX_KEY_SIZE);
 
@@ -277,16 +258,13 @@ void HandleDecode(RegistryNode** registry)
       fprintf(stderr, "ERROR: Key file '%s' is too large!\n", key->value);
       exit(EXIT_FAILURE);
     }
-
-    fprintf(stderr, "> KEY = '%s' ... %d/%d (%f%%) bytes\n", key->value, passwordBuffer->length, ZQ_MAX_KEY_SIZE,
-            (float) passwordBuffer->length / (float) ZQ_MAX_KEY_SIZE * 100.0f);
   }
   else {
     passwordBuffer->length = CaptureKey(passwordBuffer->data, "Enter password: ");
-
-    fprintf(stderr, "> KEY = PASSPHRASE! %d/%d (%f%%) bytes\n", passwordBuffer->length, ZQ_MAX_KEY_SIZE,
-            (float) passwordBuffer->length / (float) ZQ_MAX_KEY_SIZE * 100.0f);
   }
+
+  fprintf(stderr, "    key = %s ... %d/%d (%f%%) bytes\n\n", *key->value != 0 ? key->value : "<PASSPHRASE>",
+          passwordBuffer->length, ZQ_MAX_KEY_SIZE, (float) passwordBuffer->length / (float) ZQ_MAX_KEY_SIZE * 100.0f);
 
   ZigmaContext* cipher = ZigmaCreate(NULL, passwordBuffer->data, passwordBuffer->length);
 
@@ -312,7 +290,7 @@ void HandleDecode(RegistryNode** registry)
 
 void HandleCheck(RegistryNode** registry)
 {
-  RegistryNode* input  = RegistrySearch(registry, "input");
+  RegistryNode* input  = RegistrySearch(registry, "in");
   RegistryNode* format = RegistrySearch(registry, "format");
 
   DEBUG_ASSERT(input != NULL);
@@ -360,4 +338,33 @@ void HandleCheck(RegistryNode** registry)
 
     fprintf(stderr, " (%d bytees)\n", total);
   }
+}
+
+void HandleHelp(RegistryNode** registry)
+{
+  fprintf(stderr, "Usage: zigma OPERATION [OPERAND...]");
+  fprintf(stderr, "OPERATION must be one one of the following:\n");
+  fprintf(stderr, "  encode, decode, check, help, version\n");
+  fprintf(stderr, "\n");
+  fprintf(stderr, "OPERAND must be in the form of <KEY[.SUBKEY]>[=VALUE]\n");
+  fprintf(stderr, "  KEY must be one of the following:\n");
+  fprintf(stderr, "    in=FILE    read from FILE instead, or omit for:  <STDIN>\n");
+  fprintf(stderr, "    out=FILE   write to FILE instead, or omit for:   <STDOUT>\n");
+  fprintf(stderr, "    key=FILE   use FILE as master key, or omit for:  <CAPTURE>\n");
+  fprintf(stderr, "\n");
+  fprintf(stderr, "  SUBKEY must be one of the following:\n");
+  fprintf(stderr, "    .fmt=BASE   the base encoding of the data (16, 64, 256)\n");
+  fprintf(stderr, "\n");
+}
+
+void HandleVersion(RegistryNode** registry)
+{
+  fprintf(stderr, "  Copyright (C) 2024 Chase Zehl O'Byrne <zehl (at) live.com>\n\n");
+  fprintf(stderr, "  NOTICE: This program comes with ABSOLUTELY NO WARRANTY.\n");
+}
+
+void PrintVersion()
+{
+  fprintf(stderr, "ZIGMA %s/%s@%s (%s)\n", ZIGMATIQ_VERSION_STRING, ZIGMATIQ_GIT_BRANCH, ZIGMATIQ_GIT_COMMIT,
+          ZIGMATIQ_GIT_TAG);
 }
