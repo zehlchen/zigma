@@ -70,7 +70,7 @@ int main(int argc, char* argv[])
   RegistryUpdate(&registry, "in", "");         /* NULL = stdin */
   RegistryUpdate(&registry, "in.fmt", "256");  /* 256 = binary */
   RegistryUpdate(&registry, "out", "");        /* NULL = stdout */
-  RegistryUpdate(&registry, "out.fmt", "256"); /* 256 = binary */
+  RegistryUpdate(&registry, "out.fmt", "64");  /* 64 = base64 */
   RegistryUpdate(&registry, "key", "");        /* NULL = stdin */
   RegistryUpdate(&registry, "key.fmt", "256"); /* 256 = binary */
 
@@ -134,31 +134,26 @@ OperationFunction ParseRegistry(RegistryNode** registry, int argc, char* argv[])
 
 void HandleEncode(RegistryNode** registry)
 {
-  RegistryNode* input  = RegistrySearch(registry, "in");
-  RegistryNode* output = RegistrySearch(registry, "out");
-  RegistryNode* key    = RegistrySearch(registry, "key");
-  RegistryNode* format = RegistrySearch(registry, "format");
+  RegistryNode* input        = RegistrySearch(registry, "in");
+  RegistryNode* inputFormat  = RegistrySearch(registry, "in.fmt");
+  RegistryNode* output       = RegistrySearch(registry, "out");
+  RegistryNode* outputFormat = RegistrySearch(registry, "out.fmt");
+  RegistryNode* key          = RegistrySearch(registry, "key");
+  RegistryNode* keyFormat    = RegistrySearch(registry, "key.fmt");
 
-  DEBUG_ASSERT(input != NULL);
-  DEBUG_ASSERT(output != NULL);
-  DEBUG_ASSERT(key != NULL);
-  DEBUG_ASSERT(format != NULL);
+  uint32 inputBaseFormat  = strtoul(inputFormat->value, NULL, 10);
+  uint32 outputBaseFormat = strtoul(outputFormat->value, NULL, 10);
+  uint32 keyBaseFormat    = strtoul(keyFormat->value, NULL, 10);
 
-  FILE* inputFile  = stdin;
-  FILE* outputFile = stdout;
+#define IS_VALID_FORMAT(x) ((x) == 16 || (x) == 64 || (x) == 256)
+  if (!IS_VALID_FORMAT(inputBaseFormat) || !IS_VALID_FORMAT(outputBaseFormat) || !IS_VALID_FORMAT(keyBaseFormat)) {
+    fprintf(stderr, "ERROR: Invalid format '%s'!\n", keyFormat->value);
+    exit(EXIT_FAILURE);
+  }
+#undef IS_VALID_FORMAT
 
-  fprintf(stderr, "   mode = encode\n");
-  fprintf(stderr, "  input = %s\n", *input->value != 0 ? input->value : "<STDIN>");
-  fprintf(stderr, " output = %s\n", *output->value != 0 ? output->value : "<STDOUT>");
-  fprintf(stderr, " format = %s\n", format->value);
-
-  /* Setup the input. */
-  if (*input->value != 0)
-    inputFile = OpenFile(input->value, "r");
-
-  /* Setup the output. */
-  if (*output->value != 0)
-    outputFile = OpenFile(output->value, "w");
+  FILE* inputFile  = *input->value != 0 ? OpenFile(input->value, "r") : stdin;
+  FILE* outputFile = *output->value != 0 ? OpenFile(output->value, "w") : stdout;
 
   Buffer* passwordBuffer = BufferCreate(NULL, ZQ_MAX_KEY_SIZE);
 
@@ -185,17 +180,14 @@ void HandleEncode(RegistryNode** registry)
     }
   }
 
-  fprintf(stderr, "    key = %s ... %d/%d (%f%%) bytes\n\n", *key->value != 0 ? key->value : "<PASSPHRASE>",
-          passwordBuffer->length, ZQ_MAX_KEY_SIZE, (float) passwordBuffer->length / (float) ZQ_MAX_KEY_SIZE * 100.0f);
+  fprintf(stderr, "   mode            = ENCODING\n");
+  fprintf(stderr, "  input (fmt: %3d) = %s\n", inputBaseFormat, *input->value != 0 ? input->value : "<STDIN>");
+  fprintf(stderr, " output (fmt: %3d) = %s\n", outputBaseFormat, *output->value != 0 ? output->value : "<STDOUT>");
+  fprintf(stderr, "    key (fmt: %3d) = %s -> %d/%d (%f%%) bytes\n\n", keyBaseFormat,
+          *key->value != 0 ? key->value : "<PASSPHRASE>", passwordBuffer->length, ZQ_MAX_KEY_SIZE,
+          (float) passwordBuffer->length / (float) ZQ_MAX_KEY_SIZE * 100.0f);
 
   ZigmaContext* cipher = ZigmaCreate(NULL, passwordBuffer->data, passwordBuffer->length);
-
-  uint32 outputBaseFormat = strtoul(format->value, NULL, 10);
-
-  if (outputBaseFormat != 16 && outputBaseFormat != 64 && outputBaseFormat != 256) {
-    fprintf(stderr, "ERROR: Invalid output format '%s'!\n", format->value);
-    exit(EXIT_FAILURE);
-  }
 
   Buffer* outputBuffer = BufferCreate(NULL, 0);
 
@@ -212,36 +204,32 @@ void HandleEncode(RegistryNode** registry)
   else if (outputBaseFormat == 16) {
     BufferPrintBase16(outputBuffer, outputFile);
   }
+
   fprintf(stderr, "!COMPLETE! ENCODED %d BYTES!\n", total);
 }
 
 void HandleDecode(RegistryNode** registry)
 {
-  RegistryNode* input  = RegistrySearch(registry, "in");
-  RegistryNode* output = RegistrySearch(registry, "out");
-  RegistryNode* key    = RegistrySearch(registry, "key");
-  RegistryNode* format = RegistrySearch(registry, "format");
+  RegistryNode* input        = RegistrySearch(registry, "in");
+  RegistryNode* inputFormat  = RegistrySearch(registry, "in.fmt");
+  RegistryNode* output       = RegistrySearch(registry, "out");
+  RegistryNode* outputFormat = RegistrySearch(registry, "out.fmt");
+  RegistryNode* key          = RegistrySearch(registry, "key");
+  RegistryNode* keyFormat    = RegistrySearch(registry, "key.fmt");
 
-  DEBUG_ASSERT(input != NULL);
-  DEBUG_ASSERT(output != NULL);
-  DEBUG_ASSERT(key != NULL);
-  DEBUG_ASSERT(format != NULL);
+  uint32 inputBaseFormat  = strtoul(inputFormat->value, NULL, 10);
+  uint32 outputBaseFormat = strtoul(outputFormat->value, NULL, 10);
+  uint32 keyBaseFormat    = strtoul(keyFormat->value, NULL, 10);
 
-  FILE* inputFile  = stdin;
-  FILE* outputFile = stdout;
+#define IS_VALID_FORMAT(x) ((x) == 16 || (x) == 64 || (x) == 256)
+  if (!IS_VALID_FORMAT(inputBaseFormat) || !IS_VALID_FORMAT(outputBaseFormat) || !IS_VALID_FORMAT(keyBaseFormat)) {
+    fprintf(stderr, "ERROR: Invalid format '%s'!\n", keyFormat->value);
+    exit(EXIT_FAILURE);
+  }
+#undef IS_VALID_FORMAT
 
-  fprintf(stderr, "   mode = decode\n");
-  fprintf(stderr, "  input = %s\n", *input->value != 0 ? input->value : "<STDIN>");
-  fprintf(stderr, " output = %s\n", *output->value != 0 ? output->value : "<STDOUT>");
-  fprintf(stderr, " format = %s\n", format->value);
-
-  /* Setup the input. */
-  if (*input->value != 0)
-    inputFile = OpenFile(input->value, "r");
-
-  /* Setup the output. */
-  if (*output->value != 0)
-    outputFile = OpenFile(output->value, "w");
+  FILE* inputFile  = *input->value != 0 ? OpenFile(input->value, "r") : stdin;
+  FILE* outputFile = *output->value != 0 ? OpenFile(output->value, "w") : stdout;
 
   Buffer* passwordBuffer = BufferCreate(NULL, ZQ_MAX_KEY_SIZE);
 
@@ -263,17 +251,14 @@ void HandleDecode(RegistryNode** registry)
     passwordBuffer->length = CaptureKey(passwordBuffer->data, "Enter password: ");
   }
 
-  fprintf(stderr, "    key = %s ... %d/%d (%f%%) bytes\n\n", *key->value != 0 ? key->value : "<PASSPHRASE>",
-          passwordBuffer->length, ZQ_MAX_KEY_SIZE, (float) passwordBuffer->length / (float) ZQ_MAX_KEY_SIZE * 100.0f);
+  fprintf(stderr, "   mode            = DECODING\n");
+  fprintf(stderr, "  input (fmt: %3d) = %s\n", inputBaseFormat, *input->value != 0 ? input->value : "<STDIN>");
+  fprintf(stderr, " output (fmt: %3d) = %s\n", outputBaseFormat, *output->value != 0 ? output->value : "<STDOUT>");
+  fprintf(stderr, "    key (fmt: %3d) = %s -> %d/%d (%f%%) bytes\n\n", keyBaseFormat,
+          *key->value != 0 ? key->value : "<PASSPHRASE>", passwordBuffer->length, ZQ_MAX_KEY_SIZE,
+          (float) passwordBuffer->length / (float) ZQ_MAX_KEY_SIZE * 100.0f);
 
   ZigmaContext* cipher = ZigmaCreate(NULL, passwordBuffer->data, passwordBuffer->length);
-
-  uint32 outputBaseFormat = strtoul(format->value, NULL, 10);
-
-  if (outputBaseFormat != 16 && outputBaseFormat != 64 && outputBaseFormat != 256) {
-    fprintf(stderr, "ERROR: Invalid output format '%s'!\n", format->value);
-    exit(EXIT_FAILURE);
-  }
 
   Buffer* outputBuffer = BufferCreate(NULL, 0);
 
