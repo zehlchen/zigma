@@ -23,16 +23,13 @@ There are some limitations to the ZIGMA cipher and its command-line interface.
    prohibitive.
 
 ## How to Use
-~~~
-$ zigma <MODE> [OPERAND (KEY=VALUE)...]
-~~~
-`MODE` must be one of the following:
- * `encode` to encrypt
- * `decode` to decrypt
- * `check` to generate a checksum.
 
-and `OPERAND` may be a combination of the following:
- * `input=FILE` (omit to read from standard input)
- * `output=FILE` (omit to write to standard output)
- * `key=FILE` (omit to prompt for a passphrase)
- * `format=BASE` (default is `64`)
+To encode `README.md` from base `256` and output to `README.md.crypt` in base `64`
+~~~
+$ zigma encode in=README.md out=README.md.crypt in.fmt=256 out.fmt=64
+~~~
+
+To decode `README.md.crypt` from base `64` and output to `README.md` in base `256`
+~~~
+$ zigma decode in=README.md.crypt out=README.md in.fmt=64 out.fmt=256
+~~~
