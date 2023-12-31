@@ -291,25 +291,22 @@ void HandleDecode(RegistryNode** registry)
 
 void HandleCheck(RegistryNode** registry)
 {
-  RegistryNode* input  = RegistrySearch(registry, "in");
-  RegistryNode* format = RegistrySearch(registry, "format");
+  RegistryNode* input        = RegistrySearch(registry, "in");
+  RegistryNode* inputFormat  = RegistrySearch(registry, "in.fmt");
+  RegistryNode* output       = RegistrySearch(registry, "out");
+  RegistryNode* outputFormat = RegistrySearch(registry, "out.fmt");
 
-  DEBUG_ASSERT(input != NULL);
-  DEBUG_ASSERT(format != NULL);
+  uint32 inputBaseFormat  = strtoul(inputFormat->value, NULL, 10);
+  uint32 outputBaseFormat = strtoul(outputFormat->value, NULL, 10);
 
-  FILE* inputFile = stdin;
-
-  fprintf(stderr, "> MODE = CHECKSUM\n");
-
-  /* Setup the input. */
-  if (*input->value != 0) {
-    inputFile = OpenFile(input->value, "r");
-
-    fprintf(stderr, "> INPUT STREAM = '%s' ...\n", input->value);
+#define IS_VALID_FORMAT(x) ((x) == 16 || (x) == 64 || (x) == 256)
+  if (!IS_VALID_FORMAT(inputBaseFormat) || !IS_VALID_FORMAT(outputBaseFormat)) {
+    fprintf(stderr, "ERROR: Invalid format!\n");
+    exit(EXIT_FAILURE);
   }
-  else {
-    fprintf(stderr, "> INPUT STREAM = <STDIN> ...\n");
-  }
+#undef IS_VALID_FORMAT
+
+  FILE* inputFile = *input->value != 0 ? OpenFile(input->value, "r") : stdin;
 
   ZigmaContext* cipher       = ZigmaCreate(NULL, NULL, 0);
   Buffer*       outputBuffer = BufferCreate(NULL, 0);
@@ -321,12 +318,9 @@ void HandleCheck(RegistryNode** registry)
 
   ZigmaHashFinal(cipher, checksumBuffer->data, ZIGMA_CHECKSUM_SIZE);
 
-  uint32 outputBaseFormat = strtoul(format->value, NULL, 10);
-
-  fprintf(stderr, "> CHECKSUM = ");
   if (outputBaseFormat == 16) {
     for (int i = 0; i < ZIGMA_CHECKSUM_SIZE; i++) {
-      fprintf(stderr, "%02x", checksumBuffer->data[i]);
+      fprintf(stdout, "%02x", checksumBuffer->data[i]);
     }
   }
   else if (outputBaseFormat == 64) {
@@ -334,11 +328,13 @@ void HandleCheck(RegistryNode** registry)
     uint64 length  = base64_encode(encoded, (char*) checksumBuffer->data, ZIGMA_CHECKSUM_SIZE);
 
     for (int i = 0; i < length; i++) {
-      fprintf(stderr, "%c", encoded[i]);
+      fprintf(stdout, "%c", encoded[i]);
     }
 
-    fprintf(stderr, " (%d bytees)\n", total);
+    free(encoded);
   }
+
+  fprintf(stdout, "  %s (%d)\n", *input->value != 0 ? input->value : "-", total);
 }
 
 void HandleHelp(RegistryNode** registry)
