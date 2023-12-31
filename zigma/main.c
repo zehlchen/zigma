@@ -35,7 +35,9 @@
 typedef enum OperationType { OP_UNKNOWN = 0, OP_ENCODE, OP_DECODE, OP_CHECK, OP_HELP, OP_VERSION } OperationType;
 typedef void (*OperationFunction)(RegistryNode** registry);
 
-OperationFunction ParseRegistry(RegistryNode** registry, int argc, char* argv[]);
+OperationFunction DetermineOperation(const char* input);
+
+void ParseRegistry(RegistryNode** registry, int argc, char* argv[]);
 
 struct Command {
   const char*       name;
@@ -66,15 +68,33 @@ int main(int argc, char* argv[])
 
   RegistryNode* registry = NULL;
 
-  /* Load the defaults. */
-  RegistryUpdate(&registry, "in", "");         /* NULL = stdin */
-  RegistryUpdate(&registry, "in.fmt", "256");  /* 256 = binary */
-  RegistryUpdate(&registry, "out", "");        /* NULL = stdout */
-  RegistryUpdate(&registry, "out.fmt", "64");  /* 64 = base64 */
-  RegistryUpdate(&registry, "key", "");        /* NULL = stdin */
-  RegistryUpdate(&registry, "key.fmt", "256"); /* 256 = binary */
+  OperationFunction op = DetermineOperation(argv[1]);
 
-  OperationFunction op = ParseRegistry(&registry, argc, argv);
+  /* Load the defaults. */
+  if (op == HandleEncode) {
+    RegistryUpdate(&registry, "in", "");         /* NULL = stdin */
+    RegistryUpdate(&registry, "in.fmt", "256");  /* 256 = binary */
+    RegistryUpdate(&registry, "out", "");        /* NULL = stdout */
+    RegistryUpdate(&registry, "out.fmt", "64");  /* 64 = base64 */
+    RegistryUpdate(&registry, "key", "");        /* NULL = stdin */
+    RegistryUpdate(&registry, "key.fmt", "256"); /* 256 = binary */
+  }
+  else if (op == HandleDecode) {
+    RegistryUpdate(&registry, "in", "");         /* NULL = stdin */
+    RegistryUpdate(&registry, "in.fmt", "64");   /* 64 = binary */
+    RegistryUpdate(&registry, "out", "");        /* NULL = stdout */
+    RegistryUpdate(&registry, "out.fmt", "256"); /* 256 = binary */
+    RegistryUpdate(&registry, "key", "");        /* NULL = stdin */
+    RegistryUpdate(&registry, "key.fmt", "256"); /* 256 = binary */
+  }
+  else if (op == HandleCheck) {
+    RegistryUpdate(&registry, "in", "");        /* NULL = stdin */
+    RegistryUpdate(&registry, "in.fmt", "256"); /* 256 = binary */
+    RegistryUpdate(&registry, "out", "");       /* NULL = stdout */
+    RegistryUpdate(&registry, "out.fmt", "16"); /* 16 = base16 */
+  }
+
+  ParseRegistry(&registry, argc, argv);
 
   if (op != NULL) {
     op(&registry);
@@ -87,27 +107,8 @@ int main(int argc, char* argv[])
   return 0;
 }
 
-OperationFunction ParseRegistry(RegistryNode** registry, int argc, char* argv[])
+OperationFunction DetermineOperation(const char* input)
 {
-  for (int i = 2; i < argc; i++) {
-    char* dupl    = strndup(argv[i], ZQ_REGISTRY_KEY_MAX);
-    char* delimit = strchr(dupl, '=');
-    char* key     = dupl;
-    char* value   = "";
-
-    if (delimit != NULL) {
-      *delimit = '\0';
-      value    = delimit + 1;
-    }
-
-    // Add or update the key-value pair.
-    RegistryUpdate(registry, key, value);
-
-    free(dupl);
-  }
-
-  const char* input = argv[1];
-
   OperationFunction closestMatchOperation = NULL;
   uint32            closestMatchDistance  = -1;
 
@@ -130,6 +131,28 @@ OperationFunction ParseRegistry(RegistryNode** registry, int argc, char* argv[])
   }
 
   return closestMatchOperation;
+}
+
+void ParseRegistry(RegistryNode** registry, int argc, char* argv[])
+{
+  for (int i = 2; i < argc; i++) {
+    char* dupl    = strndup(argv[i], ZQ_REGISTRY_KEY_MAX);
+    char* delimit = strchr(dupl, '=');
+    char* key     = dupl;
+    char* value   = "";
+
+    if (delimit != NULL) {
+      *delimit = '\0';
+      value    = delimit + 1;
+    }
+
+    // Add or update the key-value pair.
+    RegistryUpdate(registry, key, value);
+
+    free(dupl);
+  }
+
+  const char* input = argv[1];
 }
 
 void HandleEncode(RegistryNode** registry)
