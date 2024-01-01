@@ -109,9 +109,6 @@ int main(int argc, char* argv[])
 
 OperationFunction DetermineOperation(const char* input)
 {
-  OperationFunction closestMatchOperation = NULL;
-  uint32            closestMatchDistance  = -1;
-
   for (int i = 0; commands[i].name != NULL; i++) {
     uint32 distance = LevenshteinDistance(commands[i].name, input);
 
@@ -123,14 +120,9 @@ OperationFunction DetermineOperation(const char* input)
     if (strncmp(commands[i].name, input, strlen(input)) == 0) {
       return commands[i].func;
     }
-
-    if (distance < closestMatchDistance) {
-      closestMatchDistance  = distance;
-      closestMatchOperation = commands[i].func;
-    }
   }
 
-  return closestMatchOperation;
+  return NULL;
 }
 
 void ParseRegistry(RegistryNode** registry, int argc, char* argv[])
@@ -151,8 +143,6 @@ void ParseRegistry(RegistryNode** registry, int argc, char* argv[])
 
     free(dupl);
   }
-
-  const char* input = argv[1];
 }
 
 void HandleEncode(RegistryNode** registry)
@@ -170,7 +160,7 @@ void HandleEncode(RegistryNode** registry)
 
 #define IS_VALID_FORMAT(x) ((x) == 16 || (x) == 64 || (x) == 256)
   if (!IS_VALID_FORMAT(inputBaseFormat) || !IS_VALID_FORMAT(outputBaseFormat) || !IS_VALID_FORMAT(keyBaseFormat)) {
-    fprintf(stderr, "ERROR: Invalid format '%s'!\n", keyFormat->value);
+    fprintf(stderr, "ERROR: Invalid format!\n");
     exit(EXIT_FAILURE);
   }
 #undef IS_VALID_FORMAT
@@ -253,7 +243,7 @@ void HandleDecode(RegistryNode** registry)
 
 #define IS_VALID_FORMAT(x) ((x) == 16 || (x) == 64 || (x) == 256)
   if (!IS_VALID_FORMAT(inputBaseFormat) || !IS_VALID_FORMAT(outputBaseFormat) || !IS_VALID_FORMAT(keyBaseFormat)) {
-    fprintf(stderr, "ERROR: Invalid format '%s'!\n", keyFormat->value);
+    fprintf(stderr, "ERROR: Invalid format!\n");
     exit(EXIT_FAILURE);
   }
 #undef IS_VALID_FORMAT
