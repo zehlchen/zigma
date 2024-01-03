@@ -159,8 +159,16 @@ void HandleEncode(RegistryNode** registry)
   uint32 keyBaseFormat    = strtoul(keyFormat->value, NULL, 10);
 
 #define IS_VALID_FORMAT(x) ((x) == 16 || (x) == 64 || (x) == 256)
-  if (!IS_VALID_FORMAT(inputBaseFormat) || !IS_VALID_FORMAT(outputBaseFormat) || !IS_VALID_FORMAT(keyBaseFormat)) {
-    fprintf(stderr, "ERROR: Invalid format!\n");
+  if (!IS_VALID_FORMAT(inputBaseFormat)) {
+    fprintf(stderr, "ERROR: Invalid input format '%s'!\n", inputFormat->value);
+    exit(EXIT_FAILURE);
+  }
+  if (!IS_VALID_FORMAT(outputBaseFormat)) {
+    fprintf(stderr, "ERROR: Invalid output format '%s'!\n", outputFormat->value);
+    exit(EXIT_FAILURE);
+  }
+  if (!IS_VALID_FORMAT(keyBaseFormat)) {
+    fprintf(stderr, "ERROR: Invalid key format '%s'!\n", keyFormat->value);
     exit(EXIT_FAILURE);
   }
 #undef IS_VALID_FORMAT
@@ -242,8 +250,16 @@ void HandleDecode(RegistryNode** registry)
   uint32 keyBaseFormat    = strtoul(keyFormat->value, NULL, 10);
 
 #define IS_VALID_FORMAT(x) ((x) == 16 || (x) == 64 || (x) == 256)
-  if (!IS_VALID_FORMAT(inputBaseFormat) || !IS_VALID_FORMAT(outputBaseFormat) || !IS_VALID_FORMAT(keyBaseFormat)) {
-    fprintf(stderr, "ERROR: Invalid format!\n");
+  if (!IS_VALID_FORMAT(inputBaseFormat)) {
+    fprintf(stderr, "ERROR: Invalid input format '%s'!\n", inputFormat->value);
+    exit(EXIT_FAILURE);
+  }
+  if (!IS_VALID_FORMAT(outputBaseFormat)) {
+    fprintf(stderr, "ERROR: Invalid output format '%s'!\n", outputFormat->value);
+    exit(EXIT_FAILURE);
+  }
+  if (!IS_VALID_FORMAT(keyBaseFormat)) {
+    fprintf(stderr, "ERROR: Invalid key format '%s'!\n", keyFormat->value);
     exit(EXIT_FAILURE);
   }
 #undef IS_VALID_FORMAT
