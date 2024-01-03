@@ -199,6 +199,8 @@ void HandleEncode(RegistryNode** registry)
       fprintf(stderr, "ERROR: Passwords do not match!\n");
       exit(EXIT_FAILURE);
     }
+
+    BufferDestroy(passwordRetryBuffer);
   }
 
   fprintf(stderr, "   mode            = ENCODING\n");
@@ -209,6 +211,8 @@ void HandleEncode(RegistryNode** registry)
           (float) passwordBuffer->length / (float) ZQ_MAX_KEY_SIZE * 100.0f);
 
   ZigmaContext* cipher = ZigmaCreate(NULL, passwordBuffer->data, passwordBuffer->length);
+
+  BufferDestroy(passwordBuffer);
 
   Buffer* outputBuffer = BufferCreate(NULL, 0);
 
@@ -232,6 +236,8 @@ void HandleEncode(RegistryNode** registry)
   else if (outputBaseFormat == 16) {
     BufferPrintBase16(outputBuffer, outputFile);
   }
+
+  BufferDestroy(outputBuffer);
 
   fprintf(stderr, "!COMPLETE! ENCODED %d BYTES!\n", total);
 }
@@ -292,6 +298,8 @@ void HandleDecode(RegistryNode** registry)
 
   ZigmaContext* cipher = ZigmaCreate(NULL, passwordBuffer->data, passwordBuffer->length);
 
+  BufferDestroy(passwordBuffer);
+
   Buffer* outputBuffer = BufferCreate(NULL, 0);
 
   uint64 total;
@@ -314,6 +322,8 @@ void HandleDecode(RegistryNode** registry)
   else if (outputBaseFormat == 16) {
     BufferPrintBase16(outputBuffer, outputFile);
   }
+
+  BufferDestroy(outputBuffer);
 
   fprintf(stderr, "!COMPLETE! DECODED %d BYTES!\n", total);
 }

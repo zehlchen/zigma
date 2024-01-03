@@ -22,7 +22,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 project (zigma
-  VERSION 2.0.0
+  VERSION 2.0.1
   DESCRIPTION "ZIGMA is a command line utility for encrypting, decrypting, and hashing files."
 )
 
