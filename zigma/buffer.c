@@ -80,7 +80,8 @@ void BufferDestroy(Buffer* buffer)
   if (buffer == NULL)
     return;
 
-  Nullify(buffer->data, buffer->capacity);
+  while (buffer->length--)
+    buffer->data[buffer->length] = 0;
 
   free(buffer->data);
   free(buffer);
